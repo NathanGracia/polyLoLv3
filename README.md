@@ -4,9 +4,23 @@ Bot Python ultra-rapide pour parier sur des games de League of Legends (ou autre
 
 **Interface moderne flat design avec néons cyber - Paris en 3 clics et <5 secondes.**
 
-![Version](https://img.shields.io/badge/version-1.0.0-cyan)
+![Version](https://img.shields.io/badge/version-2.0.0-cyan)
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+## 🎉 What's New in v2.0
+
+**Complete Bet Tracking & Management System!**
+
+- 💾 **Persistent Storage** - All bets saved to local database
+- 📊 **Active Bets View** - Monitor all open positions in real-time
+- 📜 **Complete History** - Browse past bets with filters and search
+- 💰 **P&L Tracking** - Automatic profit/loss calculations
+- 🔔 **Smart Notifications** - Auto-alerts when bets fill or settle
+- 📤 **CSV Export** - Export your betting history
+- 🎨 **Tabbed Interface** - Markets | Active Bets | History
+
+**See [UPGRADE_GUIDE.md](UPGRADE_GUIDE.md) for full v2.0 documentation.**
 
 ## ⚡ Quick Start
 
@@ -96,13 +110,18 @@ bot.place_bet(
 ```
 polyLoLv3/
 ├── bot.py              # Bot principal (classe PolymarketLolBot)
-├── gui_modern.py       # Interface graphique moderne
+├── gui_modern.py       # Interface graphique moderne (v2.0 avec tabs)
+├── database.py         # NEW: SQLite database manager
+├── bet_monitor.py      # NEW: Background bet status monitoring
+├── models.py           # NEW: Bet data models
+├── bets.db             # NEW: Local SQLite database (auto-created)
 ├── START_MODERN.bat    # Lanceur Windows
-├── requirements.txt    # Dépendances Python
+├── requirements.txt    # Dépendances Python (aucune nouvelle!)
 ├── .env.example        # Template de configuration
 ├── .env                # Tes clés (gitignored!)
 ├── .gitignore          # Fichiers ignorés
 ├── README.md           # Ce fichier
+├── UPGRADE_GUIDE.md    # NEW: Complete v2.0 guide
 └── MODERN_UI_GUIDE.md  # Guide détaillé de l'interface
 ```
 
@@ -133,6 +152,7 @@ CHAIN_ID=137
 
 ## 📊 Features
 
+### Core Features (v1.0)
 - ✅ Recherche de marchés en temps réel
 - ✅ Affichage des prix live
 - ✅ Placement d'ordres automatique
@@ -142,6 +162,17 @@ CHAIN_ID=137
 - ✅ Toast notifications
 - ✅ Log d'activité coloré
 - ✅ Threading (pas de freeze)
+
+### NEW in v2.0
+- ✅ **Persistent bet storage** (SQLite database)
+- ✅ **Automatic status tracking** (pending → active → settled)
+- ✅ **Active bets monitoring** (real-time view)
+- ✅ **Complete bet history** (with filters & search)
+- ✅ **P&L calculations** (automatic on settlement)
+- ✅ **Smart notifications** (bet filled, settled, cancelled)
+- ✅ **CSV export** (full history export)
+- ✅ **Tabbed interface** (Markets | Active Bets | History)
+- ✅ **Zero performance impact** (<5s bet placement maintained!)
 
 ## ⚠️ Sécurité
 

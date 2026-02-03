@@ -37,6 +37,23 @@ class PolymarketLolBot:
         self.client.set_api_creds(self.client.create_or_derive_api_creds())
         print("✅ Bot connecté et authentifié\n")
 
+        # Database and context (injected from GUI)
+        self.database = None
+        self.current_market = None
+        self.current_outcome = None
+
+    def set_database(self, database):
+        """Permet d'injecter la DB depuis GUI."""
+        self.database = database
+
+    def set_current_market(self, market):
+        """Stocke le marché actuel pour DB insert."""
+        self.current_market = market
+
+    def set_current_outcome(self, outcome):
+        """Stocke l'outcome actuel pour DB insert."""
+        self.current_outcome = outcome
+
     def search_lol_markets(self, query: str = "League of Legends", include_closed: bool = False) -> List[Dict]:
         """
         Recherche les marchés LoL disponibles.
@@ -187,12 +204,12 @@ class PolymarketLolBot:
         print(f"   Token: {token_id[:30]}...")
         print(f"   Side: {side}")
         print(f"   Prix: ${price:.4f}")
-        print(f"   Taille: {size:.2f} shares")
+        print(f"   Taille: {size:.4f} shares")
         print(f"   💵 Montant total: ${calculated_total:.2f}")
 
-        # Validation taille
-        if size < 1.0:
-            print("❌ Taille minimale: 1.0")
+        # Validation: montant total minimum
+        if calculated_total < min_total:
+            print(f"❌ Montant total minimum: ${min_total}")
             return None
 
         if confirm:
@@ -221,7 +238,34 @@ class PolymarketLolBot:
                 as_dict = dataclasses.asdict(signed_order) if not isinstance(signed_order, dict) else signed_order
                 response = self.client.post_order(as_dict)
 
-            print(f"\n✅ PARI PLACÉ! Réponse: {response}")
+            # Debug: afficher la réponse complète
+            print(f"\n📋 Réponse API complète: {response}")
+
+            if response and response.get('success'):
+                print(f"✅ PARI PLACÉ!")
+            else:
+                error_msg = response.get('error', response.get('errorMsg', 'Unknown error')) if response else 'No response'
+                print(f"⚠️  ATTENTION: {error_msg}")
+
+            # Sauvegarder dans DB si disponible
+            if self.database:
+                try:
+                    bet_data = {
+                        'order_id': response.get('orderID') if isinstance(response, dict) else None,
+                        'token_id': token_id,
+                        'market_id': self.current_market.get('condition_id') if self.current_market else None,
+                        'market_question': self.current_market.get('question') if self.current_market else None,
+                        'outcome': self.current_outcome if self.current_outcome else None,
+                        'side': side.upper(),
+                        'price': price,
+                        'size': size,
+                        'amount_spent': calculated_total,
+                        'status': 'pending'
+                    }
+                    self.database.insert_bet(bet_data)
+                except Exception as e:
+                    print(f"⚠️  Erreur sauvegarde DB: {e}")
+
             print(f"🔗 Vérifie ton compte: https://polymarket.com/\n")
             return response
 
@@ -267,6 +311,133 @@ class PolymarketLolBot:
 
         print(f"❌ Équipe '{team_name}' non trouvée dans le marché")
         return None
+
+    def get_user_positions(self, market_id: Optional[str] = None) -> List[Dict]:
+        """
+        Get user's current positions from Polymarket API.
+
+        Args:
+            market_id: Optional market ID to filter positions
+
+        Returns:
+            List of dicts with: token_id, market_id, outcome, net_size,
+            avg_entry_price, current_price, unrealized_pnl, unrealized_roi
+        """
+        try:
+            # Get user's open orders and trades
+            # Note: ClobClient may have get_orders() or similar methods
+            # We'll use the API directly if needed
+
+            # Try to get orders from the client
+            try:
+                # Attempt to get open orders (may vary by SDK version)
+                orders = self.client.get_orders()
+            except AttributeError:
+                # Fallback: use API directly
+                try:
+                    url = "https://clob.polymarket.com/orders"
+                    headers = {
+                        "Authorization": f"Bearer {self.client.creds.api_key}" if hasattr(self.client, 'creds') else ""
+                    }
+                    response = requests.get(url, headers=headers, timeout=10)
+                    orders = response.json() if response.status_code == 200 else []
+                except Exception:
+                    orders = []
+
+            # Aggregate positions by token_id
+            positions_map = {}
+
+            for order in orders:
+                if not isinstance(order, dict):
+                    continue
+
+                # Skip if filtering by market and this order doesn't match
+                order_market_id = order.get('market', order.get('condition_id'))
+                if market_id and order_market_id != market_id:
+                    continue
+
+                token_id = order.get('asset_id', order.get('token_id'))
+                if not token_id:
+                    continue
+
+                side = order.get('side', 'BUY').upper()
+                size = float(order.get('size', 0))
+                price = float(order.get('price', 0))
+                status = order.get('status', '')
+
+                # Only count filled orders
+                if status.lower() not in ['filled', 'matched', 'active']:
+                    continue
+
+                if token_id not in positions_map:
+                    positions_map[token_id] = {
+                        'token_id': token_id,
+                        'market_id': order_market_id,
+                        'outcome': order.get('outcome', 'Unknown'),
+                        'buy_size': 0.0,
+                        'buy_cost': 0.0,
+                        'sell_size': 0.0,
+                        'sell_revenue': 0.0
+                    }
+
+                pos = positions_map[token_id]
+                if side == 'BUY':
+                    pos['buy_size'] += size
+                    pos['buy_cost'] += size * price
+                elif side == 'SELL':
+                    pos['sell_size'] += size
+                    pos['sell_revenue'] += size * price
+
+            # Calculate net positions and P&L
+            positions = []
+            for token_id, pos in positions_map.items():
+                net_size = pos['buy_size'] - pos['sell_size']
+
+                # Skip closed positions
+                if abs(net_size) < 0.01:
+                    continue
+
+                # Calculate average entry price
+                if net_size > 0:
+                    # Net long position
+                    avg_entry_price = pos['buy_cost'] / pos['buy_size'] if pos['buy_size'] > 0 else 0
+                else:
+                    # Net short position
+                    avg_entry_price = pos['sell_revenue'] / pos['sell_size'] if pos['sell_size'] > 0 else 0
+
+                # Get current price
+                current_price = self.get_token_price(token_id)
+                if current_price is None:
+                    current_price = avg_entry_price
+
+                # Calculate unrealized P&L
+                if net_size > 0:
+                    # Long position: profit if price went up
+                    unrealized_pnl = net_size * (current_price - avg_entry_price)
+                else:
+                    # Short position: profit if price went down
+                    unrealized_pnl = abs(net_size) * (avg_entry_price - current_price)
+
+                # Calculate ROI
+                cost_basis = abs(net_size) * avg_entry_price
+                unrealized_roi = (unrealized_pnl / cost_basis * 100) if cost_basis > 0 else 0
+
+                positions.append({
+                    'token_id': token_id,
+                    'market_id': pos['market_id'],
+                    'outcome': pos['outcome'],
+                    'net_size': net_size,
+                    'avg_entry_price': avg_entry_price,
+                    'current_price': current_price,
+                    'unrealized_pnl': unrealized_pnl,
+                    'unrealized_roi': unrealized_roi
+                })
+
+            return positions
+
+        except Exception as e:
+            print(f"⚠️  Error fetching positions: {e}")
+            return []
 
     def monitor_markets(self, interval: int = 10):
         """
