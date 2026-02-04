@@ -205,7 +205,7 @@ class UltraSimplePolymarketGUI:
 
         # Search
         search_frame = tk.Frame(left, bg=self.bg_secondary, height=40)
-        search_frame.pack(fill=tk.X, pady=(0, 10))
+        search_frame.pack(fill=tk.X, pady=(0, 5))
         search_frame.pack_propagate(False)
 
         self.search_var = tk.StringVar(value="")
@@ -221,6 +221,31 @@ class UltraSimplePolymarketGUI:
                             cursor="hand2")
         search_btn.pack(side=tk.RIGHT, padx=10)
         search_btn.bind("<Button-1>", lambda e: self.search_markets())
+
+        # URL input (NEW)
+        url_frame = tk.Frame(left, bg=self.bg_secondary, height=40)
+        url_frame.pack(fill=tk.X, pady=(0, 10))
+        url_frame.pack_propagate(False)
+
+        self.url_var = tk.StringVar(value="")
+        self.url_entry = tk.Entry(url_frame, textvariable=self.url_var,
+                                  bg=self.bg_secondary, fg=self.neon_magenta,
+                                  font=("Arial", 9), relief=tk.FLAT,
+                                  insertbackground=self.neon_magenta)
+        self.url_entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=5)
+        self.url_entry.bind("<Return>", lambda e: self.load_from_url())
+
+        # Placeholder text for URL
+        self.url_entry.insert(0, "Or paste Polymarket URL...")
+        self.url_entry.bind("<FocusIn>", lambda e: self.url_entry.delete(0, tk.END) if self.url_entry.get() == "Or paste Polymarket URL..." else None)
+        self.url_entry.config(fg=self.text_gray)
+        self.url_entry.bind("<KeyPress>", lambda e: self.url_entry.config(fg=self.neon_magenta))
+
+        url_btn = tk.Label(url_frame, text="LOAD", bg=self.bg_secondary,
+                          fg=self.neon_magenta, font=("Arial", 9, "bold"),
+                          cursor="hand2")
+        url_btn.pack(side=tk.RIGHT, padx=10)
+        url_btn.bind("<Button-1>", lambda e: self.load_from_url())
 
         # Markets list
         list_container = tk.Frame(left, bg=self.bg_secondary)
@@ -437,6 +462,105 @@ class UltraSimplePolymarketGUI:
                 self.is_refreshing = False
 
         threading.Thread(target=_search, daemon=True).start()
+
+    def load_from_url(self):
+        """Load market directly from Polymarket URL."""
+        url = self.url_var.get().strip()
+
+        # Remove placeholder text
+        if url == "Or paste Polymarket URL...":
+            self.toast("Enter a Polymarket URL first", "warning")
+            return
+
+        if not url:
+            self.toast("Enter a Polymarket URL", "warning")
+            return
+
+        # Validate URL
+        if "polymarket.com" not in url:
+            self.toast("Invalid Polymarket URL", "error")
+            return
+
+        def _load():
+            try:
+                self.log(f"Loading from URL...", "cyan")
+
+                # Fetch the page
+                resp = requests.get(url, timeout=15, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                })
+
+                if resp.status_code != 200:
+                    self.root.after(0, lambda: self.toast(f"Failed to load page: {resp.status_code}", "error"))
+                    return
+
+                html = resp.text
+
+                # Extract __NEXT_DATA__ JSON from the page
+                import re
+                match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>', html)
+
+                if not match:
+                    self.root.after(0, lambda: self.toast("Could not parse market data", "error"))
+                    self.root.after(0, lambda: self.log("No __NEXT_DATA__ found in page", "red"))
+                    return
+
+                next_data = json.loads(match.group(1))
+
+                # Navigate the JSON structure to find market data
+                # Structure: pageProps > dehydratedState > queries > state > data
+                page_props = next_data.get('props', {}).get('pageProps', {})
+
+                # Try to find market/event data
+                market_data = None
+
+                # Check if it's a dehydrated state (React Query)
+                if 'dehydratedState' in page_props:
+                    queries = page_props['dehydratedState'].get('queries', [])
+                    for query in queries:
+                        state_data = query.get('state', {}).get('data')
+                        if state_data and isinstance(state_data, dict):
+                            # Check if it looks like a market or event
+                            if 'markets' in state_data or 'question' in state_data:
+                                market_data = state_data
+                                break
+
+                if not market_data:
+                    self.root.after(0, lambda: self.toast("Could not find market data in page", "error"))
+                    self.root.after(0, lambda: self.log("Market data structure not recognized", "red"))
+                    return
+
+                # Parse market data based on structure
+                markets = []
+
+                # If it's an event with multiple markets
+                if 'markets' in market_data and isinstance(market_data['markets'], list):
+                    self.root.after(0, lambda: self.log(f"Found event with {len(market_data['markets'])} markets", "green"))
+                    markets = market_data['markets']
+                # If it's a single market
+                elif 'question' in market_data:
+                    markets = [market_data]
+
+                if not markets:
+                    self.root.after(0, lambda: self.toast("No markets found", "error"))
+                    return
+
+                # Add markets to the list and display
+                self.markets = markets
+                self.root.after(0, self.display_markets)
+                self.root.after(0, lambda: self.toast(f"Loaded {len(markets)} market(s)", "success"))
+
+                # Auto-select first market if only one
+                if len(markets) == 1:
+                    self.root.after(100, lambda: self.select_market(markets[0]))
+
+            except Exception as e:
+                self.root.after(0, lambda: self.log(f"Error loading URL: {e}", "red"))
+                self.root.after(0, lambda: self.toast(f"Error: {e}", "error"))
+                import traceback
+                traceback.print_exc()
+
+        threading.Thread(target=_load, daemon=True).start()
 
     def display_markets(self):
         """Afficher les marchés."""
