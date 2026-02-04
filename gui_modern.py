@@ -504,7 +504,7 @@ class UltraSimplePolymarketGUI:
         token_id = tokens[outcome_idx]
 
         # Log
-        self.log(f"Fast BUY: {outcome} @ ${price:.4f} for ${amount:.2f}", "cyan")
+        self.log(f"Fast BUY: {outcome} @ ${price:.4f} for ${amount:.2f} (+3% safety buffer)", "cyan")
 
         # Disable buttons during execution
         self.buy_yes_btn.disable()
@@ -513,9 +513,17 @@ class UltraSimplePolymarketGUI:
         # Execute in background thread
         def _buy():
             try:
-                # Minimal buffer: +$0.005 on price for guaranteed execution
+                # Strategy: Add buffer to AMOUNT instead of price
+                # This ensures we stay above $1 minimum after rounding/slippage
+                # +3% buffer on amount for safety
+                safe_amount = amount * 1.03
+
+                # Use market price + small buffer for quick execution
                 adjusted_price = min(0.99, price + 0.005)
-                safe_amount = amount
+
+                self.root.after(0, lambda: self.log(
+                    f"⚡ Executing: ${safe_amount:.2f} at ${adjusted_price:.4f}", "cyan"
+                ))
 
                 result = self.bot.place_bet(
                     token_id=token_id,
