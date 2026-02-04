@@ -198,12 +198,17 @@ class UltraSimplePolymarketGUI:
                                     fg=self.text_gray, font=self.font_small)
         self.market_count.pack(side=tk.LEFT, padx=10)
 
+        # Search hint
+        hint_label = tk.Label(markets_header, text="(empty = all)", bg=self.bg,
+                            fg=self.text_gray, font=("Arial", 7))
+        hint_label.pack(side=tk.RIGHT)
+
         # Search
         search_frame = tk.Frame(left, bg=self.bg_secondary, height=40)
         search_frame.pack(fill=tk.X, pady=(0, 10))
         search_frame.pack_propagate(False)
 
-        self.search_var = tk.StringVar(value="Jesus")
+        self.search_var = tk.StringVar(value="")
         self.search_entry = tk.Entry(search_frame, textvariable=self.search_var,
                                     bg=self.bg_secondary, fg="white",
                                     font=self.font_body, relief=tk.FLAT,
@@ -380,31 +385,51 @@ class UltraSimplePolymarketGUI:
         if self.is_refreshing:
             return
 
-        query = self.search_var.get()
+        query = self.search_var.get().strip()
 
         def _search():
             try:
                 self.is_refreshing = True
-                self.log(f"Searching: {query}", "cyan")
 
-                resp = requests.get("https://gamma-api.polymarket.com/markets?limit=300&closed=false", timeout=10)
+                # If empty query, show all markets
+                if not query:
+                    self.log(f"Loading all markets...", "cyan")
+                else:
+                    self.log(f"Searching: {query}", "cyan")
+
+                # Increased limit to 1000 to catch more markets
+                resp = requests.get("https://gamma-api.polymarket.com/markets?limit=1000&closed=false", timeout=15)
                 all_markets = resp.json()
 
-                keywords = query.lower().split()
-                filtered = []
+                # If no query, show all
+                if not query:
+                    filtered = all_markets
+                else:
+                    # Better search: check question, description, AND tags
+                    keywords = query.lower().split()
+                    filtered = []
 
-                for market in all_markets:
-                    question = market.get("question", "").lower()
-                    description = market.get("description", "").lower()
+                    for market in all_markets:
+                        question = market.get("question", "").lower()
+                        description = market.get("description", "").lower()
+                        tags = " ".join(market.get("tags", [])).lower()
 
-                    for keyword in keywords:
-                        if keyword in question or keyword in description:
+                        # Combine all searchable text
+                        searchable = f"{question} {description} {tags}"
+
+                        # Check if ALL keywords are present (better than ANY)
+                        # But also check if the full query is present as-is
+                        full_query = query.lower()
+                        if full_query in searchable or all(kw in searchable for kw in keywords):
                             filtered.append(market)
-                            break
 
                 self.markets = filtered
                 self.root.after(0, self.display_markets)
-                self.log(f"Found {len(filtered)} markets", "green")
+
+                if query:
+                    self.log(f"Found {len(filtered)} markets matching '{query}'", "green")
+                else:
+                    self.log(f"Loaded {len(filtered)} active markets", "green")
 
             except Exception as e:
                 self.log(f"Search failed: {e}", "red")
