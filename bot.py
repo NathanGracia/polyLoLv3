@@ -37,29 +37,13 @@ class PolymarketLolBot:
         self.client.set_api_creds(self.client.create_or_derive_api_creds())
         print("✅ Bot connecté et authentifié\n")
 
-        # Database and context (injected from GUI)
-        self.database = None
-        self.current_market = None
-        self.current_outcome = None
 
-    def set_database(self, database):
-        """Permet d'injecter la DB depuis GUI."""
-        self.database = database
-
-    def set_current_market(self, market):
-        """Stocke le marché actuel pour DB insert."""
-        self.current_market = market
-
-    def set_current_outcome(self, outcome):
-        """Stocke l'outcome actuel pour DB insert."""
-        self.current_outcome = outcome
-
-    def search_lol_markets(self, query: str = "League of Legends", include_closed: bool = False) -> List[Dict]:
+    def search_lol_markets(self, query: str = "Jesus", include_closed: bool = False) -> List[Dict]:
         """
         Recherche les marchés LoL disponibles.
 
         Args:
-            query: Terme de recherche (par défaut "League of Legends")
+            query: Terme de recherche (par défaut "Jesus")
             include_closed: Inclure les marchés fermés (défaut: False)
 
         Returns:
@@ -134,19 +118,145 @@ class PolymarketLolBot:
 
     def get_token_price(self, token_id: str) -> Optional[float]:
         """Récupère le prix actuel d'un token."""
-        try:
-            url = "https://clob.polymarket.com/prices"
-            params = {"token_ids": token_id}
-            response = requests.get(url, params=params, timeout=10)
-            data = response.json()
+        if not token_id:
+            print("❌ No token_id provided")
+            return None
 
-            if token_id in data and data[token_id] is not None:
-                price = float(data[token_id])
-                return price if price > 0 else None
-            return None
+        # Method 1: Try simplified prices endpoint
+        try:
+            # The correct format is /prices?token_id=XXX (singular, not plural)
+            url = f"https://clob.polymarket.com/prices?token_id={token_id}"
+            response = requests.get(url, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict) and token_id in data:
+                    price = float(data[token_id])
+                    if price > 0:
+                        return price
         except Exception as e:
-            # Ne pas afficher l'erreur pour chaque token sans prix
-            return None
+            print(f"⚠️  Method 1 (prices endpoint) failed: {e}")
+
+        # Method 2: Try using py-clob-client's built-in method
+        try:
+            if hasattr(self.client, 'get_last_trade_price'):
+                result = self.client.get_last_trade_price(token_id)
+                if result:
+                    # Can be a dict, float, or string
+                    if isinstance(result, dict):
+                        # Try common dict keys
+                        price = result.get('price') or result.get('last_price') or result.get('last')
+                        if price:
+                            price = float(price)
+                            if price > 0:
+                                print(f"✓ Got price from last trade: ${price:.4f}")
+                                return price
+                    else:
+                        price = float(result)
+                        if price > 0:
+                            print(f"✓ Got price from last trade: ${price:.4f}")
+                            return price
+        except Exception as e:
+            print(f"⚠️  Method 2 (last trade) failed: {e}")
+
+        # Method 3: Try order book
+        try:
+            if hasattr(self.client, 'get_order_book'):
+                book = self.client.get_order_book(token_id)
+                if book:
+                    # OrderBookSummary object has attributes, not dict keys
+                    best_bid = None
+                    best_ask = None
+
+                    # Try attribute access first (OrderBookSummary object)
+                    if hasattr(book, 'bids') and book.bids and len(book.bids) > 0:
+                        bid_item = book.bids[0]
+                        if hasattr(bid_item, 'price'):
+                            best_bid = float(bid_item.price)
+                        elif isinstance(bid_item, dict):
+                            best_bid = float(bid_item['price'])
+
+                    if hasattr(book, 'asks') and book.asks and len(book.asks) > 0:
+                        ask_item = book.asks[0]
+                        if hasattr(ask_item, 'price'):
+                            best_ask = float(ask_item.price)
+                        elif isinstance(ask_item, dict):
+                            best_ask = float(ask_item['price'])
+
+                    if best_bid and best_ask:
+                        mid_price = (best_bid + best_ask) / 2
+                        print(f"✓ Got mid price from order book: ${mid_price:.4f}")
+                        return mid_price
+                    elif best_bid:
+                        print(f"✓ Got bid price from order book: ${best_bid:.4f}")
+                        return best_bid
+                    elif best_ask:
+                        print(f"✓ Got ask price from order book: ${best_ask:.4f}")
+                        return best_ask
+        except Exception as e:
+            print(f"⚠️  Method 3 (order book) failed: {e}")
+
+        # Method 4: Try Gamma API (market data) - Most reliable for active markets
+        try:
+            print(f"🔍 Trying Gamma API for token {token_id[:20]}...")
+            gamma_url = "https://gamma-api.polymarket.com/markets?limit=500&closed=false"
+            response = requests.get(gamma_url, timeout=15)
+
+            if response.status_code == 200:
+                markets = response.json()
+                print(f"   Searching through {len(markets)} active markets...")
+
+                for market in markets:
+                    # Try clobTokenIds first (newer format)
+                    clob_token_ids = market.get('clobTokenIds', [])
+                    if clob_token_ids:
+                        # Parse JSON string if needed
+                        if isinstance(clob_token_ids, str):
+                            import json
+                            clob_token_ids = json.loads(clob_token_ids)
+
+                        for i, clob_token_id in enumerate(clob_token_ids):
+                            if clob_token_id == token_id:
+                                # Found it! Get price from outcomePrices
+                                outcome_prices = market.get('outcomePrices')
+                                if isinstance(outcome_prices, str):
+                                    import json
+                                    outcome_prices = json.loads(outcome_prices)
+
+                                if outcome_prices and i < len(outcome_prices):
+                                    price = float(outcome_prices[i])
+                                    if price > 0:
+                                        market_name = market.get('question', 'Unknown')[:50]
+                                        print(f"✓ Got price from Gamma API: ${price:.4f} (market: {market_name}...)")
+                                        return price
+
+                    # Fallback: try old tokens format
+                    tokens = market.get('tokens', [])
+                    for i, token in enumerate(tokens):
+                        token_id_field = token.get('token_id') if isinstance(token, dict) else None
+                        if token_id_field == token_id:
+                            outcome_prices = market.get('outcomePrices')
+                            if isinstance(outcome_prices, str):
+                                import json
+                                outcome_prices = json.loads(outcome_prices)
+
+                            if outcome_prices and i < len(outcome_prices):
+                                price = float(outcome_prices[i])
+                                if price > 0:
+                                    market_name = market.get('question', 'Unknown')[:50]
+                                    print(f"✓ Got price from Gamma API (legacy): ${price:.4f} (market: {market_name}...)")
+                                    return price
+
+                print(f"   Token not found in {len(markets)} active markets")
+            else:
+                print(f"   Gamma API returned status {response.status_code}")
+        except Exception as e:
+            print(f"⚠️  Method 4 (Gamma API) failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+        print(f"❌ All 4 methods failed for token {token_id[:20]}...")
+        return None
 
     def place_bet(
         self,
@@ -246,25 +356,6 @@ class PolymarketLolBot:
             else:
                 error_msg = response.get('error', response.get('errorMsg', 'Unknown error')) if response else 'No response'
                 print(f"⚠️  ATTENTION: {error_msg}")
-
-            # Sauvegarder dans DB si disponible
-            if self.database:
-                try:
-                    bet_data = {
-                        'order_id': response.get('orderID') if isinstance(response, dict) else None,
-                        'token_id': token_id,
-                        'market_id': self.current_market.get('condition_id') if self.current_market else None,
-                        'market_question': self.current_market.get('question') if self.current_market else None,
-                        'outcome': self.current_outcome if self.current_outcome else None,
-                        'side': side.upper(),
-                        'price': price,
-                        'size': size,
-                        'amount_spent': calculated_total,
-                        'status': 'pending'
-                    }
-                    self.database.insert_bet(bet_data)
-                except Exception as e:
-                    print(f"⚠️  Erreur sauvegarde DB: {e}")
 
             print(f"🔗 Vérifie ton compte: https://polymarket.com/\n")
             return response
