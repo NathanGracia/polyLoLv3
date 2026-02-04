@@ -1,200 +1,159 @@
-# 🎮 Polymarket LoL Bot
+# ⚡ PolyLoL - Ultra Fast Polymarket Trading Bot
 
-Bot Python ultra-rapide pour parier sur des games de League of Legends (ou autre) en direct sur Polymarket.
+**Version:** 3.0 Ultra Simple
+**Status:** ✅ Stable & Production Ready
 
-**Interface moderne flat design avec néons cyber - Paris en 3 clics et <5 secondes.**
+---
 
-![Version](https://img.shields.io/badge/version-2.0.0-cyan)
-![Python](https://img.shields.io/badge/python-3.8+-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+## 🎯 Overview
 
-## 🎉 What's New in v2.0
+Ultra-fast trading bot for **Polymarket** prediction markets, optimized for esports (especially League of Legends).
 
-**Complete Bet Tracking & Management System!**
+- **Speed:** ~4 seconds, 2 clicks
+- **Design:** Minimalist neon cyberpunk
+- **Features:** Real-time price chart (5 min), configurable buffers, instant execution
 
-- 💾 **Persistent Storage** - All bets saved to local database
-- 📊 **Active Bets View** - Monitor all open positions in real-time
-- 📜 **Complete History** - Browse past bets with filters and search
-- 💰 **P&L Tracking** - Automatic profit/loss calculations
-- 🔔 **Smart Notifications** - Auto-alerts when bets fill or settle
-- 📤 **CSV Export** - Export your betting history
-- 🎨 **Tabbed Interface** - Markets | Active Bets | History
+---
 
-**See [UPGRADE_GUIDE.md](UPGRADE_GUIDE.md) for full v2.0 documentation.**
+## 🚀 Quick Start
 
-## ⚡ Quick Start
-
-1. **Clone le repo**
-   ```bash
-   git clone https://github.com/VOTRE_USERNAME/polyLoLv3.git
-   cd polyLoLv3
-   ```
-
-2. **Installe les dépendances**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure tes clés**
-   ```bash
-   cp .env.example .env
-   # Édite .env avec tes clés Polymarket
-   ```
-
-4. **Lance l'interface**
-   ```bash
-   python gui_modern.py
-   # Ou double-clic sur START_MODERN.bat (Windows)
-   ```
-
-## 🎨 Interface Moderne
-
-### Design
-- **Flat design épuré** - Pas de 3D, tout plat
-- **Néons cyber** - Cyan `#00ffff`, Magenta `#ff00ff`, Vert `#00ff88`
-- **Minimaliste** - Seulement l'essentiel
-- **Futuriste** - Hover effects, animations subtiles
-
-### Features
-- 🔍 **Recherche instantanée** - Trouve n'importe quel marché
-- 📊 **Liste scrollable** - Tous les marchés visibles
-- ⚡ **Auto-confirm mode** - Paris sans popup (0 friction)
-- 💬 **Toast notifications** - Pas de popups bloquants
-- 📝 **Log coloré** - Historique en temps réel
-- 💰 **Quick amounts** - Boutons 1$, 5$, 10$, 25$, 50$, 100$
-
-### Workflow Ultra-Rapide
-1. Active **"AUTO CONFIRM"** ☑
-2. Clic sur marché
-3. Clic sur outcome
-4. Clic sur **BET NOW**
-
-**3 clics, 0 popup, <5 secondes** 🚀
-
-Voir [MODERN_UI_GUIDE.md](MODERN_UI_GUIDE.md) pour plus de détails.
-
-## 🤖 Utilisation CLI
-
-Le bot peut aussi être utilisé en ligne de commande:
-
-```python
-from bot import PolymarketLolBot
-
-# Initialiser
-bot = PolymarketLolBot()
-
-# Rechercher des marchés
-markets = bot.search_lol_markets("League of Legends")
-
-# Parier avec montant total fixe (recommandé)
-bot.place_bet(
-    token_id="...",
-    side="BUY",
-    price=0.55,
-    total_amount=1.0,  # Dépenser exactement 1$
-    confirm=False
-)
-
-# Ou avec taille fixe
-bot.place_bet(
-    token_id="...",
-    side="BUY",
-    price=0.55,
-    size=2.0,  # 2 shares
-    confirm=False
-)
-```
-
-## 📁 Structure
-
-```
-polyLoLv3/
-├── bot.py              # Bot principal (classe PolymarketLolBot)
-├── gui_modern.py       # Interface graphique moderne (v2.0 avec tabs)
-├── database.py         # NEW: SQLite database manager
-├── bet_monitor.py      # NEW: Background bet status monitoring
-├── models.py           # NEW: Bet data models
-├── bets.db             # NEW: Local SQLite database (auto-created)
-├── START_MODERN.bat    # Lanceur Windows
-├── requirements.txt    # Dépendances Python (aucune nouvelle!)
-├── .env.example        # Template de configuration
-├── .env                # Tes clés (gitignored!)
-├── .gitignore          # Fichiers ignorés
-├── README.md           # Ce fichier
-├── UPGRADE_GUIDE.md    # NEW: Complete v2.0 guide
-└── MODERN_UI_GUIDE.md  # Guide détaillé de l'interface
-```
-
-## 🔧 Configuration
-
-Copie `.env.example` vers `.env` et remplis avec tes clés:
+### 1. Install Dependencies
 
 ```bash
-PRIVATE_KEY=0xYOUR_PRIVATE_KEY_HERE
-FUNDER_ADDRESS=0xYOUR_WALLET_ADDRESS_HERE
+pip install -r requirements.txt
+```
+
+### 2. Configure API Keys
+
+Copy `.env.example` to `.env` and add your Polymarket credentials:
+
+```bash
+PRIVATE_KEY=0xYOUR_PRIVATE_KEY
+FUNDER_ADDRESS=0xYOUR_WALLET_ADDRESS
 SIGNATURE_TYPE=1
 CHAIN_ID=137
 ```
 
-## 🚀 Avantages vs Interface Web
+### 3. Launch
 
-| Feature | Web Polymarket | Ce Bot |
-|---------|----------------|--------|
-| **Vitesse** | ~30s | **<5s** ⚡ |
-| **Clics** | 10+ | **3** |
-| **Popups** | Oui | **Non** |
-| **Auto-confirm** | Non | **Oui** |
-| **Recherche** | Lente | **Instantanée** |
-| **Multi-marchés** | Non | **Oui** |
-| **Historique** | Non | **Oui** |
-
-**Tu es 6x plus rapide! 🎯**
-
-## 📊 Features
-
-### Core Features (v1.0)
-- ✅ Recherche de marchés en temps réel
-- ✅ Affichage des prix live
-- ✅ Placement d'ordres automatique
-- ✅ Calcul automatique de la taille pour montant fixe
-- ✅ Interface graphique moderne
-- ✅ Mode auto-confirm (sans friction)
-- ✅ Toast notifications
-- ✅ Log d'activité coloré
-- ✅ Threading (pas de freeze)
-
-### NEW in v2.0
-- ✅ **Persistent bet storage** (SQLite database)
-- ✅ **Automatic status tracking** (pending → active → settled)
-- ✅ **Active bets monitoring** (real-time view)
-- ✅ **Complete bet history** (with filters & search)
-- ✅ **P&L calculations** (automatic on settlement)
-- ✅ **Smart notifications** (bet filled, settled, cancelled)
-- ✅ **CSV export** (full history export)
-- ✅ **Tabbed interface** (Markets | Active Bets | History)
-- ✅ **Zero performance impact** (<5s bet placement maintained!)
-
-## ⚠️ Sécurité
-
-- 🔒 **Clés locales** - Tes clés restent dans `.env` (gitignored)
-- 🔐 **Signature locale** - Ordres signés sur ta machine
-- 🚫 **Pas de transmission** - Aucune clé envoyée à l'API
-- ✅ **Open source** - Code 100% auditable
-
-**Ne JAMAIS commit le fichier `.env` avec tes vraies clés!**
-
-## 📝 License
-
-MIT License - Utilise librement, modifie, distribue.
-
-## 🤝 Contribution
-
-Pull requests welcome! Pour des changements majeurs, ouvre d'abord une issue.
-
-## ⚡ Support
-
-Des questions? Ouvre une issue sur GitHub.
+**Windows:** Double-click `START_MODERN.bat`
+**Linux/Mac:** `python3 gui_modern.py`
 
 ---
 
-**Made with ⚡ by the community - Trade fast, trade smart.**
+## 📊 Key Features
+
+✅ **Real-time price chart** (5 minutes live history)
+✅ **Configurable price buffer** (default 0.5% - you control it)
+✅ **Auto amount buffer** (1% fixed for $1 minimum safety)
+✅ **Direct URL loading** (paste any Polymarket market URL)
+✅ **Instant search** (filter markets in real-time)
+✅ **Mouse wheel scroll** (smooth list navigation)
+✅ **Clean activity log** (no spam, only your actions)
+
+---
+
+## 🎨 Interface Layout
+
+```
+┌─────────────────────────────────────────────────┐
+│  POLYMARKET - LIGHTNING FAST    🟢 ONLINE       │
+├──────────┬──────────────────────────────────────┤
+│ MARKETS  │  PLACE BET                           │
+│ Search   │  Selected Market                     │
+│ URL      │  Outcomes                            │
+│ List     │  Amount | Price Buffer %             │
+│          │  [BUY YES] [BUY NO]                  │
+│          │  📊 PRICE CHART (5 MIN)              │
+├──────────┴──────────────────────────────────────┤
+│  ACTIVITY LOG                                   │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Configuration
+
+### Price Buffer %
+
+Controls how aggressively you buy above market price:
+
+- **0%** = Exact market price (may not fill instantly)
+- **0.5%** = Recommended (balance speed/cost)
+- **1-2%** = Very aggressive (instant fills)
+
+### Amount Buffer
+
+**Fixed at 1%** to ensure orders stay above Polymarket's $1 minimum.
+
+Example: You enter $1.00 → Bot sends $1.01
+
+---
+
+## 📝 Activity Log Example
+
+```
+[13:45:03] Selected: LoL: T1 vs GenG (BO5)
+[13:45:05] 💰 BUY T1 Win: $1.00 → $1.01 (+1%) | Price: $0.45 → $0.4522 (+0.5%)
+[13:45:06] ✓ BUY SUCCESS: 0x8312f596ec
+```
+
+Clean, minimal, no spam.
+
+---
+
+## 🔒 Security
+
+- ✅ Private keys stored **locally** in `.env` (gitignored)
+- ✅ Orders signed **locally** (keys never sent to API)
+- ✅ 100% open source, fully auditable
+- ✅ No telemetry, tracking, or analytics
+
+**Never commit `.env` to git!**
+
+---
+
+## 📦 Project Structure
+
+```
+polyLoLv3/
+├── bot.py               # Core trading logic & API
+├── gui_modern.py        # Main UI (Tkinter + Matplotlib)
+├── bets.db             # Local SQLite DB (auto-created)
+├── requirements.txt    # Python dependencies
+├── START_MODERN.bat    # Windows launcher
+├── .env               # Your API keys (gitignored)
+├── .env.example       # Template
+├── claude.md          # AI assistant instructions
+├── README.md          # This file
+└── LICENSE            # MIT License
+```
+
+---
+
+## 🐛 Troubleshooting
+
+**"invalid amount... min size: $1"**
+→ Increase your bet amount or reduce price buffer %
+
+**Connection failed**
+→ Check `.env` credentials and internet connection
+
+**Prices not updating**
+→ Market may be closed. Try selecting another market.
+
+---
+
+## 🎮 Optimized for Esports
+
+Built for League of Legends markets but works with **any Polymarket event**.
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE)
+
+---
+
+**Trade fast. Trade smart. ⚡**
