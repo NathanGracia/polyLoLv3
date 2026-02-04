@@ -498,12 +498,14 @@ class UltraSimplePolymarketGUI:
 
                 # Extract __NEXT_DATA__ JSON from the page
                 import re
-                match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>', html)
+                match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>', html, re.DOTALL)
 
                 if not match:
                     self.root.after(0, lambda: self.toast("Could not parse market data", "error"))
                     self.root.after(0, lambda: self.log("No __NEXT_DATA__ found in page", "red"))
                     return
+
+                self.log("Found __NEXT_DATA__, parsing...", "cyan")
 
                 next_data = json.loads(match.group(1))
 
@@ -511,38 +513,53 @@ class UltraSimplePolymarketGUI:
                 # Structure: pageProps > dehydratedState > queries > state > data
                 page_props = next_data.get('props', {}).get('pageProps', {})
 
-                # Try to find market/event data
-                market_data = None
+                # Try multiple strategies to find market data
+                markets = []
 
-                # Check if it's a dehydrated state (React Query)
+                # Strategy 1: Check dehydratedState queries
                 if 'dehydratedState' in page_props:
                     queries = page_props['dehydratedState'].get('queries', [])
                     for query in queries:
                         state_data = query.get('state', {}).get('data')
                         if state_data and isinstance(state_data, dict):
-                            # Check if it looks like a market or event
-                            if 'markets' in state_data or 'question' in state_data:
-                                market_data = state_data
-                                break
+                            # Check if it has markets array
+                            if 'markets' in state_data and isinstance(state_data['markets'], list):
+                                markets.extend(state_data['markets'])
+                            # Or if it's a single market
+                            elif 'question' in state_data and 'tokens' in state_data:
+                                markets.append(state_data)
 
-                if not market_data:
-                    self.root.after(0, lambda: self.toast("Could not find market data in page", "error"))
-                    self.root.after(0, lambda: self.log("Market data structure not recognized", "red"))
-                    return
+                # Strategy 2: Check direct event/market in pageProps
+                if not markets:
+                    if 'event' in page_props and 'markets' in page_props['event']:
+                        markets = page_props['event']['markets']
+                    elif 'market' in page_props:
+                        markets = [page_props['market']]
 
-                # Parse market data based on structure
-                markets = []
+                # Strategy 3: Deep search for any object with 'clobTokenIds' (definitive market marker)
+                if not markets:
+                    def find_markets_recursive(obj, depth=0):
+                        if depth > 10:  # Prevent infinite recursion
+                            return []
+                        found = []
+                        if isinstance(obj, dict):
+                            # Check if this looks like a market
+                            if 'clobTokenIds' in obj and 'question' in obj:
+                                found.append(obj)
+                            # Recurse into values
+                            for value in obj.values():
+                                found.extend(find_markets_recursive(value, depth + 1))
+                        elif isinstance(obj, list):
+                            for item in obj:
+                                found.extend(find_markets_recursive(item, depth + 1))
+                        return found
 
-                # If it's an event with multiple markets
-                if 'markets' in market_data and isinstance(market_data['markets'], list):
-                    self.root.after(0, lambda: self.log(f"Found event with {len(market_data['markets'])} markets", "green"))
-                    markets = market_data['markets']
-                # If it's a single market
-                elif 'question' in market_data:
-                    markets = [market_data]
+                    markets = find_markets_recursive(page_props)
 
                 if not markets:
-                    self.root.after(0, lambda: self.toast("No markets found", "error"))
+                    # Log the structure for debugging
+                    self.root.after(0, lambda: self.log(f"Available keys in pageProps: {list(page_props.keys())[:10]}", "red"))
+                    self.root.after(0, lambda: self.toast("No markets found in page data", "error"))
                     return
 
                 # Add markets to the list and display
