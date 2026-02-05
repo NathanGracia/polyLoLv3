@@ -631,7 +631,17 @@
                     },
                     scales: {
                         x: {
-                            display: false
+                            display: true,
+                            ticks: {
+                                color: '#888888',
+                                font: { size: 9 },
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 8
+                            },
+                            grid: {
+                                color: 'rgba(136, 136, 136, 0.1)'
+                            }
                         },
                         y: {
                             beginAtZero: false,
@@ -699,14 +709,14 @@
                 }
             });
 
-            // Add to chart (keep last 100 points = 5 minutes at 3s interval)
+            // Add to chart (keep last 600 points = 30 minutes at 3s interval)
             const now = new Date().toLocaleTimeString();
             priceHistory.timestamps.push(now);
             priceHistory.price0.push(prices[0]);
             priceHistory.price1.push(prices[1]);
 
-            // Limit to 100 points
-            if (priceHistory.timestamps.length > 100) {
+            // Limit to 600 points (30 minutes)
+            if (priceHistory.timestamps.length > 600) {
                 priceHistory.timestamps.shift();
                 priceHistory.price0.shift();
                 priceHistory.price1.shift();
