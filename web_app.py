@@ -179,9 +179,10 @@ def place_bet():
                 'price': adjusted_price
             })
         else:
+            error_msg = result.get('error', 'Unknown error') if result else 'Bet placement failed'
             return jsonify({
                 'success': False,
-                'error': result.get('error', 'Unknown error')
+                'error': error_msg
             }), 400
 
     except Exception as e:

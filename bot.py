@@ -316,7 +316,7 @@ class PolymarketLolBot:
         # Validation prix
         if not (0.01 <= price <= 0.99):
             print("❌ Prix doit être entre 0.01 et 0.99")
-            return None
+            return {'success': False, 'error': 'Price must be between 0.01 and 0.99'}
 
         # Calculer size à partir de total_amount si fourni
         if total_amount is not None:
@@ -326,7 +326,7 @@ class PolymarketLolBot:
 
         elif size is None:
             print("❌ Vous devez fournir soit 'size' soit 'total_amount'")
-            return None
+            return {'success': False, 'error': 'Must provide either size or total_amount'}
 
         # Calculer le montant total
         calculated_total = price * size
@@ -348,13 +348,13 @@ class PolymarketLolBot:
         # Validation: montant total minimum
         if calculated_total < min_total:
             print(f"❌ Montant total minimum: ${min_total}")
-            return None
+            return {'success': False, 'error': f'Minimum total amount: ${min_total}'}
 
         if confirm:
             confirmation = input("\n⚠️  Confirmer le pari? (y/n): ")
             if confirmation.lower() != 'y':
                 print("❌ Pari annulé")
-                return None
+                return {'success': False, 'error': 'Bet cancelled by user'}
 
         try:
             # Créer l'ordre
@@ -390,7 +390,7 @@ class PolymarketLolBot:
 
         except Exception as e:
             print(f"❌ Erreur placement: {e}")
-            return None
+            return {'success': False, 'error': str(e)}
 
     def quick_bet_on_team(
         self,
