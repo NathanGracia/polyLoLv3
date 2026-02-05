@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POLYMARKET - ULTRA FAST</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -154,6 +155,19 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 1px solid #333;
+        }
+
+        .price-chart-container {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #00ffff;
+            margin-bottom: 20px;
+            height: 250px;
+        }
+
+        #priceChart {
+            max-height: 220px;
         }
 
         .market-question {
@@ -403,6 +417,11 @@
                 <div class="outcomes" id="outcomesContainer"></div>
             </div>
 
+            <!-- Price Chart -->
+            <div class="price-chart-container" id="chartContainer" style="display: none;">
+                <canvas id="priceChart"></canvas>
+            </div>
+
             <div class="controls">
                 <div class="control-group">
                     <label class="control-label">AMOUNT ($)</label>
@@ -436,6 +455,13 @@
         let selectedMarket = null;
         let outcomes = [];
         let prices = [];
+        let priceChart = null;
+        let priceHistory = {
+            timestamps: [],
+            price0: [],
+            price1: []
+        };
+        let priceUpdateInterval = null;
 
         // Load markets on start
         loadMarkets();
@@ -531,6 +557,15 @@
             document.getElementById('buyBtn0').textContent = `BUY ${outcomes[0]}`;
             document.getElementById('buyBtn1').textContent = `BUY ${outcomes[1] || 'NO'}`;
 
+            // Initialize chart
+            initChart();
+
+            // Start price updates
+            if (priceUpdateInterval) {
+                clearInterval(priceUpdateInterval);
+            }
+            priceUpdateInterval = setInterval(updatePrices, 3000); // Update every 3 seconds
+
             log(`Selected: ${market.question}`, 'info');
         }
 
@@ -538,6 +573,150 @@
             document.querySelectorAll('.outcome-card').forEach((c, i) => {
                 c.classList.toggle('selected', i === index);
             });
+        }
+
+        function initChart() {
+            // Show chart container
+            document.getElementById('chartContainer').style.display = 'block';
+
+            // Reset price history
+            priceHistory = {
+                timestamps: [],
+                price0: [],
+                price1: []
+            };
+
+            // Destroy existing chart
+            if (priceChart) {
+                priceChart.destroy();
+            }
+
+            // Create new chart
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: outcomes[0],
+                            data: [],
+                            borderColor: '#00ffff',
+                            backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 0
+                        },
+                        {
+                            label: outcomes[1] || 'NO',
+                            data: [],
+                            borderColor: '#ff00ff',
+                            backgroundColor: 'rgba(255, 0, 255, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff',
+                                font: { size: 11 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            beginAtZero: false,
+                            min: 0,
+                            max: 1,
+                            ticks: {
+                                color: '#888888',
+                                font: { size: 10 }
+                            },
+                            grid: {
+                                color: 'rgba(136, 136, 136, 0.1)'
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 200
+                    }
+                }
+            });
+
+            // Add initial prices
+            const now = new Date().toLocaleTimeString();
+            priceHistory.timestamps.push(now);
+            priceHistory.price0.push(prices[0]);
+            priceHistory.price1.push(prices[1]);
+
+            priceChart.data.labels.push(now);
+            priceChart.data.datasets[0].data.push(prices[0]);
+            priceChart.data.datasets[1].data.push(prices[1]);
+            priceChart.update('none');
+        }
+
+        async function updatePrices() {
+            if (!selectedMarket || !priceChart) return;
+
+            const tokens = typeof selectedMarket.tokens === 'string'
+                ? JSON.parse(selectedMarket.tokens)
+                : (selectedMarket.tokens || []);
+
+            // Fetch new prices
+            const newPrices = [];
+            for (let i = 0; i < Math.min(2, tokens.length); i++) {
+                let tokenId = tokens[i];
+                if (typeof tokenId === 'object' && tokenId.token_id) {
+                    tokenId = tokenId.token_id;
+                }
+
+                try {
+                    const priceResp = await fetch(`/api/price/${tokenId}`);
+                    const priceData = await priceResp.json();
+                    const price = priceData.success ? priceData.price : prices[i];
+                    newPrices.push(price);
+                } catch (e) {
+                    newPrices.push(prices[i]);
+                }
+            }
+
+            // Update prices array
+            prices = newPrices;
+
+            // Update price display in outcome cards
+            document.querySelectorAll('.outcome-price').forEach((el, i) => {
+                if (i < prices.length && prices[i]) {
+                    el.textContent = `$${prices[i].toFixed(4)}`;
+                }
+            });
+
+            // Add to chart (keep last 100 points = 5 minutes at 3s interval)
+            const now = new Date().toLocaleTimeString();
+            priceHistory.timestamps.push(now);
+            priceHistory.price0.push(prices[0]);
+            priceHistory.price1.push(prices[1]);
+
+            // Limit to 100 points
+            if (priceHistory.timestamps.length > 100) {
+                priceHistory.timestamps.shift();
+                priceHistory.price0.shift();
+                priceHistory.price1.shift();
+            }
+
+            // Update chart
+            priceChart.data.labels = priceHistory.timestamps;
+            priceChart.data.datasets[0].data = priceHistory.price0;
+            priceChart.data.datasets[1].data = priceHistory.price1;
+            priceChart.update('none');
         }
 
         async function placeBet(outcomeIndex) {
