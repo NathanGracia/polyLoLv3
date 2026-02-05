@@ -1,113 +1,160 @@
-# 🚀 Déploiement Web App sur VPS
+# 🚀 Déploiement PolyBet
 
-## 📦 Préparation
+## Architecture
 
-**Sur ton PC, créer un zip avec:**
-
-```bash
-# Aller dans le dossier
-cd C:\Users\natha\Documents\polyLoLv3
-
-# Créer un dossier deploy
-mkdir deploy
-cp web_app.py deploy/
-cp bot.py deploy/
-cp requirements.txt deploy/
-cp Dockerfile deploy/
-cp docker-compose.yml deploy/
-cp -r templates deploy/
-cp .env deploy/
+```
+Internet → HTTPS (443) → Nginx (reverse proxy) → Docker (8080) → Flask App
 ```
 
-## 🌐 Upload sur VPS
+## Setup initial (une seule fois)
 
-**1. Transférer sur VPS (depuis PowerShell):**
-
-```powershell
-scp -r deploy ubuntu@141.227.165.46:~/polymarket-web
-```
-
-**2. SSH vers VPS:**
+### 1. Sur le serveur OVH
 
 ```bash
-ssh ubuntu@141.227.165.46
-```
-
-## 🐳 Installation Docker sur VPS
-
-```bash
-# Update
-sudo apt update
-
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-
-# Install Docker Compose
-sudo apt install docker-compose -y
-
-# Add user to docker group
-sudo usermod -aG docker $USER
-```
-
-**Déconnecte et reconnecte SSH pour appliquer les permissions**
-
-## 🚀 Lancer l'application
-
-```bash
-# Aller dans le dossier
+# Cloner le repo
+git clone <ton-repo> ~/polymarket-web
 cd ~/polymarket-web
 
-# Construire et lancer
-docker-compose up -d
+# Copier et configurer .env
+cp .env.example .env
+nano .env  # Configurer PRIVATE_KEY, WEB_USERNAME, WEB_PASSWORD
+
+# Installer la config nginx
+sudo cp nginx.conf /etc/nginx/sites-available/polybet
+sudo ln -sf /etc/nginx/sites-available/polybet /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Tester et recharger nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+# Rendre le script de déploiement exécutable
+chmod +x deploy.sh
+
+# Premier déploiement
+./deploy.sh
+```
+
+### 2. Configurer SSL (une seule fois)
+
+```bash
+sudo certbot --nginx -d polybet.nathangracia.com
+```
+
+Après ça, Certbot aura modifié `/etc/nginx/sites-available/polybet` avec les certificats SSL.
+
+**⚠️ IMPORTANT:** La prochaine fois que tu déploies, la config nginx sera écrasée par `nginx.conf` du repo.
+Donc après le premier `certbot`, récupère la config complète :
+
+```bash
+# Copier la config modifiée par Certbot dans le repo local
+sudo cat /etc/nginx/sites-available/polybet > ~/polymarket-web/nginx.conf
+cd ~/polymarket-web
+git add nginx.conf
+git commit -m "Update nginx config with SSL from Certbot"
+git push
+```
+
+Puis en local, fais un `git pull` pour récupérer la config avec SSL.
+
+## Déploiement (après chaque changement)
+
+### En local (Windows)
+
+```bash
+# Modifier ton code
+# Commit et push
+git add .
+git commit -m "Update: description"
+git push
+```
+
+### Sur le serveur (OVH)
+
+```bash
+cd ~/polymarket-web
+./deploy.sh
+```
+
+C'est tout ! 🎉
+
+## Commandes utiles
+
+```bash
+# Voir les logs en temps réel
+sudo docker-compose logs -f
+
+# Redémarrer l'app
+sudo docker-compose restart
+
+# Voir le statut
+sudo docker-compose ps
+
+# Tester nginx
+sudo nginx -t
+
+# Recharger nginx sans downtime
+sudo systemctl reload nginx
+
+# Voir les certificats SSL
+sudo certbot certificates
+
+# Renouveler SSL manuellement (auto tous les 90j)
+sudo certbot renew
+```
+
+## Troubleshooting
+
+### 502 Bad Gateway
+```bash
+# Vérifier que Docker tourne
+sudo docker-compose ps
 
 # Voir les logs
-docker-compose logs -f
+sudo docker-compose logs
+
+# Vérifier le port
+curl http://localhost:8080
 ```
 
-## 🌍 Accès
+### 404 Not Found
+```bash
+# Vérifier la config nginx
+cat /etc/nginx/sites-available/polybet
 
-**Ouvre dans ton navigateur:**
+# Tester la config
+sudo nginx -t
 
+# Recharger
+sudo systemctl reload nginx
 ```
-http://141.227.165.46:5000
+
+### Container ne démarre pas
+```bash
+# Voir les logs complets
+sudo docker-compose logs
+
+# Rebuild from scratch
+sudo docker-compose down
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
 ```
 
-## 🛠️ Commandes utiles
+## Variables d'environnement (.env)
 
 ```bash
-# Stopper
-docker-compose down
+# Polymarket API
+PRIVATE_KEY=0x...
+FUNDER_ADDRESS=0x...
 
-# Redémarrer
-docker-compose restart
-
-# Voir les logs en temps réel
-docker-compose logs -f
-
-# Rebuild après modification
-docker-compose up -d --build
+# App web
+WEB_USERNAME=admin
+WEB_PASSWORD=ton-password-securise
+SECRET_KEY=ton-secret-key-random
 ```
 
-## 🔥 Ouvrir le port firewall
+**⚠️ Ne jamais commit .env sur git !**
 
-Si tu ne peux pas accéder, ouvre le port:
+## 🌐 Accès
 
-```bash
-sudo ufw allow 5000/tcp
-```
-
-## ✅ Test rapide
-
-```bash
-# Depuis ton PC
-curl http://141.227.165.46:5000/api/health
-```
-
-Tu devrais voir: `{"success":true,"status":"online"}`
-
-## 🎯 C'est prêt!
-
-Accède à: **http://141.227.165.46:5000**
-
-Design neon + Trading ultra rapide depuis l'Autriche! 🇦🇹⚡
+**Production:** https://polybet.nathangracia.com
