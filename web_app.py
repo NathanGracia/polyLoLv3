@@ -3,8 +3,9 @@
 Flask backend with neon UI
 """
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_cors import CORS
+from functools import wraps
 import os
 from bot import PolymarketLolBot
 from dotenv import load_dotenv
@@ -15,6 +16,13 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Secret key for sessions (change this to a random string!)
+app.secret_key = os.getenv('SECRET_KEY', 'change-this-to-random-secret-key-in-production')
+
+# Login credentials from .env
+USERNAME = os.getenv('WEB_USERNAME', 'admin')
+PASSWORD = os.getenv('WEB_PASSWORD', 'changeme')
 
 # Global bot instance
 bot = None
@@ -28,12 +36,46 @@ def get_bot():
             bot = PolymarketLolBot()
         return bot
 
+def login_required(f):
+    """Decorator to require login for routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return jsonify({'success': False, 'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/')
 def index():
-    """Main page"""
+    """Main page - requires login"""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page"""
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username', '')
+        password = data.get('password', '')
+
+        if username == USERNAME and password == PASSWORD:
+            session['logged_in'] = True
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Logout"""
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
 @app.route('/api/markets', methods=['GET'])
+@login_required
 def get_markets():
     """Search markets"""
     try:
@@ -80,6 +122,7 @@ def get_markets():
         }), 500
 
 @app.route('/api/price/<token_id>', methods=['GET'])
+@login_required
 def get_price(token_id):
     """Get token price"""
     try:
@@ -97,6 +140,7 @@ def get_price(token_id):
         }), 500
 
 @app.route('/api/bet', methods=['POST'])
+@login_required
 def place_bet():
     """Place a bet"""
     try:
@@ -147,6 +191,7 @@ def place_bet():
         }), 500
 
 @app.route('/api/load-url', methods=['POST'])
+@login_required
 def load_url():
     """Load market from Polymarket URL"""
     try:

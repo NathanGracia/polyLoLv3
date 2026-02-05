@@ -61,6 +61,23 @@
             background: #00ff88;
         }
 
+        .logout-btn {
+            padding: 6px 12px;
+            background: rgba(255, 0, 102, 0.2);
+            border: 1px solid #ff0066;
+            border-radius: 4px;
+            color: #ff0066;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 0, 102, 0.3);
+            box-shadow: 0 0 10px rgba(255, 0, 102, 0.5);
+        }
+
         /* Main content */
         .content {
             margin-top: 70px;
@@ -362,6 +379,7 @@
         <div class="status">
             <span class="status-dot"></span>
             <span id="statusText">ONLINE 🇦🇹</span>
+            <button class="logout-btn" onclick="window.location.href='/logout'">🚪 Logout</button>
         </div>
     </div>
 
