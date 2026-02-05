@@ -5,6 +5,7 @@
 
 import sys
 import json
+import os
 import tkinter as tk
 from tkinter import font
 import threading
@@ -12,6 +13,7 @@ import requests
 from datetime import datetime, timedelta
 from collections import deque
 from bot import PolymarketLolBot
+from dotenv import load_dotenv
 
 # Matplotlib for price chart
 import matplotlib
@@ -21,6 +23,24 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8')
+
+# Load env and setup proxy for GUI requests
+load_dotenv()
+proxy_http = os.getenv("PROXY_HTTP", "").strip()
+proxy_https = os.getenv("PROXY_HTTPS", "").strip()
+
+GUI_PROXIES = None
+if proxy_http or proxy_https:
+    GUI_PROXIES = {}
+    if proxy_http:
+        GUI_PROXIES['http'] = proxy_http
+    if proxy_https:
+        GUI_PROXIES['https'] = proxy_https
+
+# Create global session with proxy for GUI requests
+GUI_SESSION = requests.Session()
+if GUI_PROXIES:
+    GUI_SESSION.proxies.update(GUI_PROXIES)
 
 
 class NeonButton(tk.Canvas):
@@ -551,7 +571,7 @@ class UltraSimplePolymarketGUI:
                     self.log(f"Searching: {query}", "cyan")
 
                 # Increased limit to 1000 to catch more markets
-                resp = requests.get("https://gamma-api.polymarket.com/markets?limit=1000&closed=false", timeout=15)
+                resp = GUI_SESSION.get("https://gamma-api.polymarket.com/markets?limit=1000&closed=false", timeout=15)
                 all_markets = resp.json()
 
                 # If no query, show all
@@ -630,7 +650,7 @@ class UltraSimplePolymarketGUI:
                 api_url = f"https://gamma-api.polymarket.com/events?slug={slug}"
                 self.root.after(0, lambda: self.log(f"Querying Gamma API...", "cyan"))
 
-                resp = requests.get(api_url, timeout=15)
+                resp = GUI_SESSION.get(api_url, timeout=15)
 
                 if resp.status_code != 200:
                     self.root.after(0, lambda: self.toast(f"API returned {resp.status_code}", "error"))
