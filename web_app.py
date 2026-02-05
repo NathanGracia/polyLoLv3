@@ -37,12 +37,37 @@ def index():
 def get_markets():
     """Search markets"""
     try:
+        import json as json_lib
+
         query = request.args.get('query', '')
         bot = get_bot()
         markets = bot.search_lol_markets(query, include_closed=False)
 
         # Filter active markets
         active = [m for m in markets if not m.get('closed', False)]
+
+        # Normalize market data - ensure tokens field is properly formatted
+        for market in active:
+            # Try clobTokenIds first (newer format)
+            if 'clobTokenIds' in market and not market.get('tokens'):
+                clob_ids = market['clobTokenIds']
+                # Parse if it's a JSON string
+                if isinstance(clob_ids, str):
+                    clob_ids = json_lib.loads(clob_ids)
+                # Convert to tokens format
+                market['tokens'] = clob_ids
+
+            # Ensure tokens is parsed if it's a string
+            elif 'tokens' in market and isinstance(market['tokens'], str):
+                market['tokens'] = json_lib.loads(market['tokens'])
+
+            # Ensure outcomes is parsed if it's a string
+            if 'outcomes' in market and isinstance(market['outcomes'], str):
+                market['outcomes'] = json_lib.loads(market['outcomes'])
+
+            # Ensure outcomePrices is parsed if it's a string
+            if 'outcomePrices' in market and isinstance(market['outcomePrices'], str):
+                market['outcomePrices'] = json_lib.loads(market['outcomePrices'])
 
         return jsonify({
             'success': True,
@@ -174,6 +199,30 @@ def load_url():
                 'success': False,
                 'error': 'No markets in this event'
             }), 404
+
+        # Normalize market data - ensure tokens field is properly formatted
+        import json as json_lib
+        for market in markets:
+            # Try clobTokenIds first (newer format)
+            if 'clobTokenIds' in market and not market.get('tokens'):
+                clob_ids = market['clobTokenIds']
+                # Parse if it's a JSON string
+                if isinstance(clob_ids, str):
+                    clob_ids = json_lib.loads(clob_ids)
+                # Convert to tokens format
+                market['tokens'] = clob_ids
+
+            # Ensure tokens is parsed if it's a string
+            elif 'tokens' in market and isinstance(market['tokens'], str):
+                market['tokens'] = json_lib.loads(market['tokens'])
+
+            # Ensure outcomes is parsed if it's a string
+            if 'outcomes' in market and isinstance(market['outcomes'], str):
+                market['outcomes'] = json_lib.loads(market['outcomes'])
+
+            # Ensure outcomePrices is parsed if it's a string
+            if 'outcomePrices' in market and isinstance(market['outcomePrices'], str):
+                market['outcomePrices'] = json_lib.loads(market['outcomePrices'])
 
         return jsonify({
             'success': True,

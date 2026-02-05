@@ -462,18 +462,37 @@
             cardElement.classList.add('selected');
 
             selectedMarket = market;
+
+            // DEBUG: Log the entire market object
+            console.log('=== MARKET SELECTED ===');
+            console.log('Full market object:', market);
+            console.log('market.tokens:', market.tokens);
+            console.log('market.clobTokenIds:', market.clobTokenIds);
+            console.log('market.outcomes:', market.outcomes);
+            console.log('======================');
+
             document.getElementById('marketQuestion').textContent = market.question;
 
-            // Parse outcomes and tokens
-            outcomes = JSON.parse(market.outcomes || '[]');
-            const tokens = JSON.parse(market.tokens || '[]');
+            // Parse outcomes and tokens (handle both string and array)
+            outcomes = typeof market.outcomes === 'string'
+                ? JSON.parse(market.outcomes)
+                : (market.outcomes || []);
+            const tokens = typeof market.tokens === 'string'
+                ? JSON.parse(market.tokens)
+                : (market.tokens || []);
 
             // Fetch prices
             const outcomesHtml = [];
             prices = [];
 
             for (let i = 0; i < Math.min(outcomes.length, 2); i++) {
-                const priceResp = await fetch(`/api/price/${tokens[i]}`);
+                // Handle tokens as either array of strings or array of objects
+                let tokenId = tokens[i];
+                if (typeof tokenId === 'object' && tokenId.token_id) {
+                    tokenId = tokenId.token_id;
+                }
+
+                const priceResp = await fetch(`/api/price/${tokenId}`);
                 const priceData = await priceResp.json();
                 const price = priceData.success ? priceData.price : 0;
                 prices.push(price);
@@ -509,6 +528,14 @@
                 return;
             }
 
+            // Debug: log selectedMarket
+            console.log('=== PLACE BET DEBUG ===');
+            console.log('selectedMarket:', selectedMarket);
+            console.log('selectedMarket.tokens:', selectedMarket.tokens);
+            console.log('selectedMarket.clobTokenIds:', selectedMarket.clobTokenIds);
+            console.log('outcomeIndex:', outcomeIndex);
+            console.log('======================');
+
             const amount = parseFloat(document.getElementById('amountInput').value);
             const priceBuffer = parseFloat(document.getElementById('bufferInput').value);
             const price = prices[outcomeIndex];
@@ -518,8 +545,30 @@
                 return;
             }
 
-            const tokens = JSON.parse(selectedMarket.tokens);
-            const tokenId = tokens[outcomeIndex];
+            // Parse tokens (handle both string and array)
+            let tokens;
+            if (!selectedMarket.tokens) {
+                log(`❌ Market has no tokens field!`, 'error');
+                console.error('Full market object:', selectedMarket);
+                showToast('Market missing tokens', 'error');
+                return;
+            }
+
+            try {
+                tokens = typeof selectedMarket.tokens === 'string'
+                    ? JSON.parse(selectedMarket.tokens)
+                    : selectedMarket.tokens;
+            } catch (e) {
+                log(`Error parsing tokens: ${e.message}`, 'error');
+                showToast('Invalid market tokens', 'error');
+                return;
+            }
+
+            // Handle tokens as either array of strings or array of objects
+            let tokenId = tokens[outcomeIndex];
+            if (typeof tokenId === 'object' && tokenId.token_id) {
+                tokenId = tokenId.token_id;
+            }
 
             // Disable buttons
             document.getElementById('buyBtn0').disabled = true;
@@ -539,6 +588,14 @@
                         price_buffer: priceBuffer
                     })
                 });
+
+                // Check response status
+                if (!response.ok) {
+                    const text = await response.text();
+                    log(`❌ HTTP ${response.status}: ${text.substring(0, 200)}`, 'error');
+                    showToast(`Error ${response.status}`, 'error');
+                    return;
+                }
 
                 const data = await response.json();
 
