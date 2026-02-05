@@ -2,615 +2,785 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLYMARKET - ULTRA FAST</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Polymarket Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚡</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* ================================
+           DESIGN SYSTEM - Modern Dark Terminal
+        ================================ */
+        :root {
+            /* Colors - Dark Elegance */
+            --color-bg: #0d0d0d;
+            --color-bg-elevated: #181818;
+            --color-bg-card: #1e1e1e;
+            --color-bg-input: #252525;
+            --color-border: #2a2a2a;
+            --color-border-hover: #3a3a3a;
+
+            /* Brand Colors */
+            --color-primary: #00d9ff;
+            --color-primary-dim: #0099bb;
+            --color-secondary: #ff0080;
+            --color-success: #00ff88;
+            --color-danger: #ff3366;
+            --color-warning: #ffaa00;
+
+            /* Text */
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #a0a0a0;
+            --color-text-tertiary: #707070;
+
+            /* Glows */
+            --glow-primary: rgba(0, 217, 255, 0.2);
+            --glow-success: rgba(0, 255, 136, 0.2);
+            --glow-danger: rgba(255, 51, 102, 0.2);
+
+            /* Spacing */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+
+            /* Radius */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+
+            /* Typography */
+            --font-ui: 'Space Grotesk', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+
+            /* Animations */
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* ================================
+           BASE RESET
+        ================================ */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            overflow: hidden;
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
-        .container {
+        body {
+            font-family: var(--font-ui);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ================================
+           LAYOUT - Mobile First Grid
+        ================================ */
+        .app {
             display: flex;
-            height: 100vh;
-            padding: 20px;
-            gap: 20px;
-            box-sizing: border-box;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         /* Header */
         .header {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            background: #0a0a0a;
-            padding: 15px 20px;
-            border-bottom: 1px solid #00ffff;
-            z-index: 1000;
+            z-index: 100;
+            background: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--color-border);
+            padding: var(--space-4);
+        }
+
+        .header-content {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
-        .title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #00ffff;
-        }
-
-        .status {
+        .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--space-3);
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: none;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: 100px;
             font-size: 12px;
-            color: #888888;
+            font-family: var(--font-mono);
+            font-weight: 500;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 6px;
+            height: 6px;
+            background: var(--color-success);
             border-radius: 50%;
-            background: #00ff88;
+            animation: pulse-dot 2s ease-in-out infinite;
         }
 
-        .logout-btn {
-            padding: 6px 12px;
-            background: rgba(255, 0, 102, 0.2);
-            border: 1px solid #ff0066;
-            border-radius: 4px;
-            color: #ff0066;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-left: 10px;
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
         }
 
-        .logout-btn:hover {
-            background: rgba(255, 0, 102, 0.3);
-            box-shadow: 0 0 10px rgba(255, 0, 102, 0.5);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            body {
-                overflow: auto;
-            }
-
-            .content {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-
-            .markets-panel {
-                width: 100%;
-                max-height: 300px;
-                margin-bottom: 15px;
-            }
-
-            .trading-panel {
-                width: 100%;
-                max-height: none;
-            }
-
-            .container {
-                padding: 10px;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-                padding: 10px;
-            }
-
-            .title {
-                font-size: 16px;
-            }
-
-            .status {
-                font-size: 10px;
-            }
-
-            .logout-btn {
-                padding: 4px 8px;
-                font-size: 10px;
-                margin-left: 0;
-            }
-
-            .content {
-                margin-top: 90px;
-            }
-
-            .market-card {
-                padding: 10px;
-            }
-
-            .market-title {
-                font-size: 12px;
-            }
-
-            .market-volume {
-                font-size: 10px;
-            }
-
-            .market-question {
-                font-size: 14px;
-            }
-
-            .outcomes {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .outcome-card {
-                width: 100%;
-            }
-
-            .price-chart-container {
-                height: 200px;
-            }
-
-            .controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .control-group {
-                width: 100%;
-            }
-
-            .quick-amounts {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-
-            .quick-btn {
-                padding: 8px;
-                font-size: 11px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .btn {
-                width: 100%;
-                padding: 12px;
-                font-size: 12px;
-            }
-
-            .activity-log {
-                height: 120px;
-                font-size: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title {
-                font-size: 14px;
-            }
-
-            .market-question {
-                font-size: 12px;
-            }
-
-            .outcome-name {
-                font-size: 11px;
-            }
-
-            .outcome-price {
-                font-size: 13px;
-            }
-
-            .control-label {
-                font-size: 10px;
-            }
-
-            .control-input {
-                padding: 8px;
-                font-size: 13px;
-            }
-
-            .quick-btn {
-                padding: 6px;
-                font-size: 10px;
-            }
-
-            .btn {
-                padding: 10px;
-                font-size: 11px;
-            }
-
-            .price-chart-container {
-                height: 180px;
-                padding: 10px;
-            }
-        }
-
-        /* Main content */
-        .content {
-            margin-top: 70px;
+        /* Main Layout */
+        .main {
+            flex: 1;
             display: flex;
-            gap: 20px;
+            flex-direction: column;
+            max-width: 1600px;
+            margin: 0 auto;
             width: 100%;
-            height: calc(100vh - 90px);
+            padding: var(--space-4);
+            gap: var(--space-4);
         }
 
-        /* Left panel - Markets */
-        .markets-panel {
-            width: 350px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 15px;
-            overflow-y: auto;
+        /* Markets Sidebar */
+        .markets {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 400px;
         }
 
-        .search-box {
-            width: 100%;
-            padding: 10px;
-            background: #0a0a0a;
-            border: 1px solid #00ffff;
-            border-radius: 4px;
-            color: white;
+        .markets-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-bg-card);
+        }
+
+        .markets-title {
             font-size: 14px;
-            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-3);
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .input {
+            width: 100%;
+            padding: var(--space-3);
+            background: var(--color-bg-input);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            transition: all 0.2s var(--ease-smooth);
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--glow-primary);
+        }
+
+        .input::placeholder {
+            color: var(--color-text-tertiary);
+        }
+
+        .url-group {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .markets-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-2);
         }
 
         .market-card {
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: var(--space-3);
+            margin-bottom: var(--space-2);
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s var(--ease-smooth);
         }
 
         .market-card:hover {
-            border-color: #00ffff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            border-color: var(--color-border-hover);
+            transform: translateY(-1px);
         }
 
-        .market-card.selected {
-            border-color: #ff00ff;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
-        }
-
-        .market-title {
-            font-size: 13px;
-            color: white;
-            margin-bottom: 5px;
-        }
-
-        .market-volume {
-            font-size: 11px;
-            color: #00ff88;
-        }
-
-        /* Right panel - Trading */
-        .trading-panel {
-            flex: 1;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .market-info {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #333;
-        }
-
-        .price-chart-container {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #00ffff;
-            margin-bottom: 20px;
-            height: 250px;
-        }
-
-        #priceChart {
-            max-height: 220px;
+        .market-card.active {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(255, 0, 128, 0.1));
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px var(--glow-primary);
         }
 
         .market-question {
-            font-size: 16px;
-            color: #00ffff;
-            margin-bottom: 15px;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: var(--space-2);
         }
 
-        .outcomes {
+        .market-meta {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--color-text-tertiary);
         }
 
-        .outcome-card {
+        .market-volume {
+            color: var(--color-success);
+        }
+
+        /* Trading Panel */
+        .trading {
             flex: 1;
-            background: #0a0a0a;
-            border: 2px solid #333;
-            border-radius: 8px;
-            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+        }
+
+        .card-header {
+            margin-bottom: var(--space-5);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            line-height: 1.3;
+            margin-bottom: var(--space-2);
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Outcomes Grid */
+        .outcomes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-5);
+        }
+
+        .outcome {
+            padding: var(--space-4);
+            background: var(--color-bg-card);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s var(--ease-smooth);
+            text-align: center;
         }
 
-        .outcome-card:hover {
-            border-color: #00ffff;
+        .outcome:hover {
+            border-color: var(--color-border-hover);
+            transform: scale(1.02);
         }
 
-        .outcome-card.selected {
-            border-color: #00ff88;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        .outcome.active {
+            border-color: var(--color-primary);
+            background: rgba(0, 217, 255, 0.05);
+            box-shadow: 0 4px 16px var(--glow-primary);
         }
 
-        .outcome-name {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 8px;
+        .outcome-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-2);
+            font-weight: 600;
         }
 
         .outcome-price {
-            font-size: 20px;
-            color: #00ffff;
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-primary);
+            letter-spacing: -1px;
         }
 
-        .controls {
+        /* Chart */
+        .chart-container {
+            background: var(--color-bg-card);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+            min-height: 200px;
+            display: none;
+        }
+
+        .chart-container.visible {
+            display: block;
+        }
+
+        #priceChart {
+            width: 100% !important;
+            height: 200px !important;
+        }
+
+        /* Controls */
+        .controls-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--space-2);
         }
 
         .control-label {
             font-size: 12px;
-            color: #888;
-            font-weight: bold;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
         }
 
-        .control-input {
-            padding: 12px;
-            background: #0a0a0a;
-            border: 1px solid #00ffff;
-            border-radius: 4px;
-            color: white;
-            font-size: 16px;
-        }
-
+        /* Quick amounts */
         .quick-amounts {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
         }
 
-        .quick-btn {
-            flex: 1;
-            padding: 8px;
-            background: #0a0a0a;
-            border: 1px solid #00ffff;
-            border-radius: 4px;
-            color: #00ffff;
+        /* Buttons */
+        .btn {
+            padding: var(--space-3);
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-primary);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
+            transition: all 0.2s var(--ease-smooth);
+            text-align: center;
         }
 
-        .quick-btn:hover {
-            background: #00ffff;
-            color: #0a0a0a;
+        .btn:hover {
+            border-color: var(--color-primary);
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dim));
+            border: none;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 16px var(--glow-primary);
+            transform: translateY(-2px);
         }
 
         .action-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
         }
 
-        .btn {
-            padding: 20px;
+        .action-btn {
+            padding: var(--space-5);
             border: 2px solid;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.2s;
-            background: #0a0a0a;
+            transition: all 0.3s var(--ease-smooth);
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-yes {
-            border-color: #00ff88;
-            color: #00ff88;
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .btn-yes:hover {
-            background: #00ff88;
-            color: #0a0a0a;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        .action-btn:hover::before {
+            opacity: 0.1;
         }
 
-        .btn-no {
-            border-color: #ff0066;
-            color: #ff0066;
+        .action-btn:active {
+            transform: scale(0.97);
         }
 
-        .btn-no:hover {
-            background: #ff0066;
-            color: #0a0a0a;
-            box-shadow: 0 0 20px rgba(255, 0, 102, 0.5);
-        }
-
-        .btn:disabled {
-            opacity: 0.3;
+        .action-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
+            pointer-events: none;
         }
 
-        /* Activity log */
+        .action-btn-buy {
+            background: var(--color-bg-card);
+            border-color: var(--color-success);
+            color: var(--color-success);
+        }
+
+        .action-btn-buy:hover {
+            box-shadow: 0 8px 24px var(--glow-success);
+        }
+
+        .action-btn-sell {
+            background: var(--color-bg-card);
+            border-color: var(--color-danger);
+            color: var(--color-danger);
+        }
+
+        .action-btn-sell:hover {
+            box-shadow: 0 8px 24px var(--glow-danger);
+        }
+
+        /* Activity Log */
         .activity-log {
-            flex: 1;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 15px;
+            background: var(--color-bg-card);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            max-height: 200px;
             overflow-y: auto;
+            font-family: var(--font-mono);
             font-size: 12px;
-            font-family: 'Courier New', monospace;
+            line-height: 1.8;
         }
 
         .log-entry {
-            margin-bottom: 8px;
-            color: #888;
+            color: var(--color-text-tertiary);
+            margin-bottom: var(--space-1);
         }
 
-        .log-entry.success {
-            color: #00ff88;
-        }
+        .log-entry.info { color: var(--color-primary); }
+        .log-entry.success { color: var(--color-success); }
+        .log-entry.error { color: var(--color-danger); }
 
-        .log-entry.error {
-            color: #ff0066;
-        }
-
-        .log-entry.info {
-            color: #00ffff;
-        }
-
-        /* Toast notification */
+        /* Toast */
         .toast {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #0a0a0a;
-            border: 2px solid #00ffff;
-            border-radius: 8px;
-            padding: 15px 20px;
-            min-width: 250px;
-            z-index: 2000;
-            animation: slideIn 0.3s ease;
+            bottom: var(--space-4);
+            left: var(--space-4);
+            right: var(--space-4);
+            max-width: 500px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: slideUp 0.3s var(--ease-smooth);
+            font-size: 14px;
+            font-weight: 500;
         }
 
-        @keyframes slideIn {
+        @keyframes slideUp {
             from {
-                transform: translateX(400px);
+                transform: translateY(100px);
                 opacity: 0;
             }
             to {
-                transform: translateX(0);
+                transform: translateY(0);
                 opacity: 1;
             }
         }
 
         .toast.success {
-            border-color: #00ff88;
+            border-color: var(--color-success);
+            color: var(--color-success);
         }
 
         .toast.error {
-            border-color: #ff0066;
+            border-color: var(--color-danger);
+            color: var(--color-danger);
         }
 
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-border-hover);
+        }
+
+        /* ================================
+           RESPONSIVE - Tablet & Desktop
+        ================================ */
+        @media (min-width: 640px) {
+            .brand-text {
+                display: block;
+            }
+
+            .quick-amounts {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            #priceChart {
+                height: 240px !important;
+            }
+
+            .toast {
+                margin-left: auto;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .main {
+                flex-direction: row;
+                padding: var(--space-6);
+                gap: var(--space-6);
+            }
+
+            .markets {
+                width: 380px;
+                max-height: calc(100vh - 120px);
+                flex-shrink: 0;
+            }
+
+            .trading {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            #priceChart {
+                height: 280px !important;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .markets {
+                width: 420px;
+            }
+
+            #priceChart {
+                height: 320px !important;
+            }
+        }
+
+        /* Loading State */
         .loading {
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #00ffff;
-            border-top-color: transparent;
+            width: 14px;
+            height: 14px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-10);
+            color: var(--color-text-tertiary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-4);
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">⚡ POLYMARKET - ULTRA FAST</div>
-        <div class="status">
-            <span class="status-dot"></span>
-            <span id="statusText">ONLINE 🇦🇹</span>
-            <button class="logout-btn" onclick="window.location.href='/logout'">🚪 Logout</button>
-        </div>
-    </div>
-
-    <div class="content">
-        <!-- Markets Panel -->
-        <div class="markets-panel">
-            <input type="text" class="search-box" id="searchBox" placeholder="Search markets...">
-
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                <input type="text" class="search-box" id="urlBox" placeholder="Or paste Polymarket URL..." style="flex: 1; margin-bottom: 0;">
-                <button class="quick-btn" onclick="loadFromUrl()" style="width: 60px; padding: 10px;">LOAD</button>
-            </div>
-
-            <div id="marketsList"></div>
-        </div>
-
-        <!-- Trading Panel -->
-        <div class="trading-panel">
-            <div class="market-info">
-                <div class="market-question" id="marketQuestion">Select a market</div>
-                <div class="outcomes" id="outcomesContainer"></div>
-            </div>
-
-            <!-- Price Chart -->
-            <div class="price-chart-container" id="chartContainer" style="display: none;">
-                <canvas id="priceChart"></canvas>
-            </div>
-
-            <div class="controls">
-                <div class="control-group">
-                    <label class="control-label">AMOUNT ($)</label>
-                    <input type="number" class="control-input" id="amountInput" value="1.0" step="0.1" min="0.1">
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-logo">⚡</div>
+                    <div class="brand-text">Polymarket</div>
                 </div>
-                <div class="control-group">
-                    <label class="control-label">PRICE BUFFER (%)</label>
-                    <input type="number" class="control-input" id="bufferInput" value="0.5" step="0.1" min="0">
+                <div class="header-actions">
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span id="statusText">LIVE</span>
+                    </div>
+                    <button class="btn" id="logoutBtn">Exit</button>
                 </div>
             </div>
+        </header>
 
-            <div class="quick-amounts">
-                <button class="quick-btn" onclick="setAmount(1)">$1</button>
-                <button class="quick-btn" onclick="setAmount(5)">$5</button>
-                <button class="quick-btn" onclick="setAmount(10)">$10</button>
-                <button class="quick-btn" onclick="setAmount(25)">$25</button>
-                <button class="quick-btn" onclick="setAmount(50)">$50</button>
-                <button class="quick-btn" onclick="setAmount(100)">$100</button>
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Markets Sidebar -->
+            <aside class="markets">
+                <div class="markets-header">
+                    <div class="markets-title">Markets</div>
+                    <div class="search-group">
+                        <input type="text" class="input" id="searchBox" placeholder="Search markets...">
+                        <div class="url-group">
+                            <input type="text" class="input" id="urlBox" placeholder="Or paste URL" style="flex: 1;">
+                            <button class="btn btn-primary" id="loadUrlBtn">Load</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="markets-list" id="marketsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">Loading markets...</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Trading Panel -->
+            <div class="trading">
+                <!-- Market Info Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title" id="marketQuestion">Select a market to begin trading</div>
+                        <div class="card-subtitle">Choose an outcome and set your bet amount</div>
+                    </div>
+                    <div class="outcomes" id="outcomesContainer"></div>
+                </div>
+
+                <!-- Price Chart -->
+                <div class="card chart-container" id="chartContainer">
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <!-- Trading Controls -->
+                <div class="card">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label class="control-label">Amount (USD)</label>
+                            <input type="number" class="input" id="amountInput" value="1.0" step="0.1" min="0.1">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Buffer (%)</label>
+                            <input type="number" class="input" id="bufferInput" value="0.5" step="0.1" min="0">
+                        </div>
+                    </div>
+
+                    <div class="quick-amounts">
+                        <button class="btn">$1</button>
+                        <button class="btn">$5</button>
+                        <button class="btn">$10</button>
+                        <button class="btn">$25</button>
+                        <button class="btn">$50</button>
+                        <button class="btn">$100</button>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-btn action-btn-buy" id="buyBtn0" disabled>
+                            Buy Outcome 1
+                        </button>
+                        <button class="action-btn action-btn-sell" id="buyBtn1" disabled>
+                            Buy Outcome 2
+                        </button>
+                    </div>
+
+                    <div class="activity-log" id="activityLog"></div>
+                </div>
             </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-yes" id="buyBtn0" onclick="placeBet(0)" disabled>BUY OUTCOME 1</button>
-                <button class="btn btn-no" id="buyBtn1" onclick="placeBet(1)" disabled>BUY OUTCOME 2</button>
-            </div>
-
-            <div class="activity-log" id="activityLog"></div>
-        </div>
+        </main>
     </div>
 
     <script>
@@ -618,26 +788,36 @@
         let outcomes = [];
         let prices = [];
         let priceChart = null;
-        let priceHistory = {
-            timestamps: [],
-            price0: [],
-            price1: []
-        };
+        let priceHistory = { timestamps: [], price0: [], price1: [] };
         let priceUpdateInterval = null;
 
-        // Load markets on start
+        // Initialize
         loadMarkets();
 
-        // Search functionality
+        // Event listeners
         document.getElementById('searchBox').addEventListener('input', (e) => {
             loadMarkets(e.target.value);
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            window.location.href = '/logout';
+        });
+
+        document.getElementById('loadUrlBtn').addEventListener('click', loadFromUrl);
+
+        document.getElementById('buyBtn0').addEventListener('click', () => placeBet(0));
+        document.getElementById('buyBtn1').addEventListener('click', () => placeBet(1));
+
+        // Quick amount buttons
+        document.querySelectorAll('.quick-amounts .btn').forEach((btn, index) => {
+            const amounts = [1, 5, 10, 25, 50, 100];
+            btn.addEventListener('click', () => setAmount(amounts[index]));
         });
 
         async function loadMarkets(query = '') {
             try {
                 const response = await fetch(`/api/markets?query=${encodeURIComponent(query)}`);
                 const data = await response.json();
-
                 if (data.success) {
                     displayMarkets(data.markets);
                 }
@@ -648,51 +828,49 @@
 
         function displayMarkets(markets) {
             const container = document.getElementById('marketsList');
-            container.innerHTML = '';
+            if (markets.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No markets found</div></div>';
+                return;
+            }
 
-            markets.forEach(market => {
-                const card = document.createElement('div');
-                card.className = 'market-card';
-                card.innerHTML = `
-                    <div class="market-title">${market.question}</div>
-                    <div class="market-volume">📊 Vol: $${formatNumber(market.volume24hr)}</div>
-                `;
-                card.onclick = () => selectMarket(market, card);
-                container.appendChild(card);
+            container.innerHTML = markets.map((market, index) => `
+                <div class="market-card" data-market-index="${index}">
+                    <div class="market-question">${escapeHtml(market.question)}</div>
+                    <div class="market-meta">
+                        <span class="market-volume">VOL $${formatNumber(market.volume24hr)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Store markets data globally and add event listeners
+            window.marketsData = markets;
+            container.querySelectorAll('.market-card').forEach((card, index) => {
+                card.addEventListener('click', function() {
+                    selectMarket(markets[index], this);
+                });
             });
         }
 
-        async function selectMarket(market, cardElement) {
-            // Update UI
-            document.querySelectorAll('.market-card').forEach(c => c.classList.remove('selected'));
-            cardElement.classList.add('selected');
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
+        async function selectMarket(market, element) {
+            document.querySelectorAll('.market-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
             selectedMarket = market;
-
-            // DEBUG: Log the entire market object
-            console.log('=== MARKET SELECTED ===');
-            console.log('Full market object:', market);
-            console.log('market.tokens:', market.tokens);
-            console.log('market.clobTokenIds:', market.clobTokenIds);
-            console.log('market.outcomes:', market.outcomes);
-            console.log('======================');
 
             document.getElementById('marketQuestion').textContent = market.question;
 
-            // Parse outcomes and tokens (handle both string and array)
-            outcomes = typeof market.outcomes === 'string'
-                ? JSON.parse(market.outcomes)
-                : (market.outcomes || []);
-            const tokens = typeof market.tokens === 'string'
-                ? JSON.parse(market.tokens)
-                : (market.tokens || []);
+            outcomes = typeof market.outcomes === 'string' ? JSON.parse(market.outcomes) : (market.outcomes || []);
+            const tokens = typeof market.tokens === 'string' ? JSON.parse(market.tokens) : (market.tokens || []);
 
-            // Fetch prices
-            const outcomesHtml = [];
             prices = [];
+            const outcomesHtml = [];
 
             for (let i = 0; i < Math.min(outcomes.length, 2); i++) {
-                // Handle tokens as either array of strings or array of objects
                 let tokenId = tokens[i];
                 if (typeof tokenId === 'object' && tokenId.token_id) {
                     tokenId = tokenId.token_id;
@@ -704,56 +882,47 @@
                 prices.push(price);
 
                 outcomesHtml.push(`
-                    <div class="outcome-card" id="outcome${i}" onclick="selectOutcome(${i})">
-                        <div class="outcome-name">${outcomes[i]}</div>
-                        <div class="outcome-price">$${price ? price.toFixed(4) : 'N/A'}</div>
+                    <div class="outcome" id="outcome${i}" data-outcome-index="${i}">
+                        <div class="outcome-label">${escapeHtml(outcomes[i])}</div>
+                        <div class="outcome-price">$${price ? price.toFixed(3) : 'N/A'}</div>
                     </div>
                 `);
             }
 
             document.getElementById('outcomesContainer').innerHTML = outcomesHtml.join('');
 
-            // Enable buttons
+            // Add event listeners to outcome cards
+            document.querySelectorAll('.outcome').forEach((card, index) => {
+                card.addEventListener('click', function() {
+                    selectOutcome(index);
+                });
+            });
+
             document.getElementById('buyBtn0').disabled = false;
             document.getElementById('buyBtn1').disabled = false;
-            document.getElementById('buyBtn0').textContent = `BUY ${outcomes[0]}`;
-            document.getElementById('buyBtn1').textContent = `BUY ${outcomes[1] || 'NO'}`;
+            document.getElementById('buyBtn0').textContent = `Buy ${outcomes[0]}`;
+            document.getElementById('buyBtn1').textContent = `Buy ${outcomes[1] || 'NO'}`;
 
-            // Initialize chart
             initChart();
 
-            // Start price updates
-            if (priceUpdateInterval) {
-                clearInterval(priceUpdateInterval);
-            }
-            priceUpdateInterval = setInterval(updatePrices, 3000); // Update every 3 seconds
+            if (priceUpdateInterval) clearInterval(priceUpdateInterval);
+            priceUpdateInterval = setInterval(updatePrices, 3000);
 
             log(`Selected: ${market.question}`, 'info');
         }
 
         function selectOutcome(index) {
-            document.querySelectorAll('.outcome-card').forEach((c, i) => {
-                c.classList.toggle('selected', i === index);
+            document.querySelectorAll('.outcome').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
             });
         }
 
         function initChart() {
-            // Show chart container
-            document.getElementById('chartContainer').style.display = 'block';
+            document.getElementById('chartContainer').classList.add('visible');
+            priceHistory = { timestamps: [], price0: [], price1: [] };
 
-            // Reset price history
-            priceHistory = {
-                timestamps: [],
-                price0: [],
-                price1: []
-            };
+            if (priceChart) priceChart.destroy();
 
-            // Destroy existing chart
-            if (priceChart) {
-                priceChart.destroy();
-            }
-
-            // Create new chart
             const ctx = document.getElementById('priceChart').getContext('2d');
             priceChart = new Chart(ctx, {
                 type: 'line',
@@ -763,20 +932,22 @@
                         {
                             label: outcomes[0],
                             data: [],
-                            borderColor: '#00ffff',
-                            backgroundColor: 'rgba(0, 255, 255, 0.1)',
-                            tension: 0.3,
+                            borderColor: '#00d9ff',
+                            backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                            tension: 0.4,
                             borderWidth: 2,
-                            pointRadius: 0
+                            pointRadius: 0,
+                            fill: true
                         },
                         {
                             label: outcomes[1] || 'NO',
                             data: [],
-                            borderColor: '#ff00ff',
-                            backgroundColor: 'rgba(255, 0, 255, 0.1)',
-                            tension: 0.3,
+                            borderColor: '#ff0080',
+                            backgroundColor: 'rgba(255, 0, 128, 0.1)',
+                            tension: 0.4,
                             borderWidth: 2,
-                            pointRadius: 0
+                            pointRadius: 0,
+                            fill: true
                         }
                     ]
                 },
@@ -786,8 +957,8 @@
                     plugins: {
                         legend: {
                             labels: {
-                                color: '#ffffff',
-                                font: { size: 11 }
+                                color: '#a0a0a0',
+                                font: { size: 11, family: 'IBM Plex Mono' }
                             }
                         }
                     },
@@ -795,41 +966,33 @@
                         x: {
                             display: true,
                             ticks: {
-                                color: '#888888',
+                                color: '#707070',
                                 font: { size: 9 },
                                 maxRotation: 0,
                                 autoSkip: true,
-                                maxTicksLimit: 8
+                                maxTicksLimit: 6
                             },
-                            grid: {
-                                color: 'rgba(136, 136, 136, 0.1)'
-                            }
+                            grid: { color: '#2a2a2a' }
                         },
                         y: {
                             beginAtZero: false,
                             min: 0,
                             max: 1,
                             ticks: {
-                                color: '#888888',
+                                color: '#707070',
                                 font: { size: 10 }
                             },
-                            grid: {
-                                color: 'rgba(136, 136, 136, 0.1)'
-                            }
+                            grid: { color: '#2a2a2a' }
                         }
                     },
-                    animation: {
-                        duration: 200
-                    }
+                    animation: { duration: 300 }
                 }
             });
 
-            // Add initial prices
             const now = new Date().toLocaleTimeString();
             priceHistory.timestamps.push(now);
             priceHistory.price0.push(prices[0]);
             priceHistory.price1.push(prices[1]);
-
             priceChart.data.labels.push(now);
             priceChart.data.datasets[0].data.push(prices[0]);
             priceChart.data.datasets[1].data.push(prices[1]);
@@ -839,12 +1002,9 @@
         async function updatePrices() {
             if (!selectedMarket || !priceChart) return;
 
-            const tokens = typeof selectedMarket.tokens === 'string'
-                ? JSON.parse(selectedMarket.tokens)
-                : (selectedMarket.tokens || []);
-
-            // Fetch new prices
+            const tokens = typeof selectedMarket.tokens === 'string' ? JSON.parse(selectedMarket.tokens) : (selectedMarket.tokens || []);
             const newPrices = [];
+
             for (let i = 0; i < Math.min(2, tokens.length); i++) {
                 let tokenId = tokens[i];
                 if (typeof tokenId === 'object' && tokenId.token_id) {
@@ -861,30 +1021,25 @@
                 }
             }
 
-            // Update prices array
             prices = newPrices;
 
-            // Update price display in outcome cards
             document.querySelectorAll('.outcome-price').forEach((el, i) => {
                 if (i < prices.length && prices[i]) {
-                    el.textContent = `$${prices[i].toFixed(4)}`;
+                    el.textContent = `$${prices[i].toFixed(3)}`;
                 }
             });
 
-            // Add to chart (keep last 600 points = 30 minutes at 3s interval)
             const now = new Date().toLocaleTimeString();
             priceHistory.timestamps.push(now);
             priceHistory.price0.push(prices[0]);
             priceHistory.price1.push(prices[1]);
 
-            // Limit to 600 points (30 minutes)
             if (priceHistory.timestamps.length > 600) {
                 priceHistory.timestamps.shift();
                 priceHistory.price0.shift();
                 priceHistory.price1.shift();
             }
 
-            // Update chart
             priceChart.data.labels = priceHistory.timestamps;
             priceChart.data.datasets[0].data = priceHistory.price0;
             priceChart.data.datasets[1].data = priceHistory.price1;
@@ -893,17 +1048,9 @@
 
         async function placeBet(outcomeIndex) {
             if (!selectedMarket) {
-                showToast('Select a market first!', 'error');
+                showToast('Select a market first', 'error');
                 return;
             }
-
-            // Debug: log selectedMarket
-            console.log('=== PLACE BET DEBUG ===');
-            console.log('selectedMarket:', selectedMarket);
-            console.log('selectedMarket.tokens:', selectedMarket.tokens);
-            console.log('selectedMarket.clobTokenIds:', selectedMarket.clobTokenIds);
-            console.log('outcomeIndex:', outcomeIndex);
-            console.log('======================');
 
             const amount = parseFloat(document.getElementById('amountInput').value);
             const priceBuffer = parseFloat(document.getElementById('bufferInput').value);
@@ -914,36 +1061,28 @@
                 return;
             }
 
-            // Parse tokens (handle both string and array)
             let tokens;
             if (!selectedMarket.tokens) {
-                log(`❌ Market has no tokens field!`, 'error');
-                console.error('Full market object:', selectedMarket);
                 showToast('Market missing tokens', 'error');
                 return;
             }
 
             try {
-                tokens = typeof selectedMarket.tokens === 'string'
-                    ? JSON.parse(selectedMarket.tokens)
-                    : selectedMarket.tokens;
+                tokens = typeof selectedMarket.tokens === 'string' ? JSON.parse(selectedMarket.tokens) : selectedMarket.tokens;
             } catch (e) {
-                log(`Error parsing tokens: ${e.message}`, 'error');
                 showToast('Invalid market tokens', 'error');
                 return;
             }
 
-            // Handle tokens as either array of strings or array of objects
             let tokenId = tokens[outcomeIndex];
             if (typeof tokenId === 'object' && tokenId.token_id) {
                 tokenId = tokenId.token_id;
             }
 
-            // Disable buttons
             document.getElementById('buyBtn0').disabled = true;
             document.getElementById('buyBtn1').disabled = true;
 
-            log(`⚡ Placing BET: ${outcomes[outcomeIndex]} for $${amount.toFixed(2)}...`, 'info');
+            log(`Placing bet: ${outcomes[outcomeIndex]} for $${amount.toFixed(2)}`, 'info');
 
             try {
                 const response = await fetch('/api/bet', {
@@ -958,10 +1097,9 @@
                     })
                 });
 
-                // Check response status
                 if (!response.ok) {
                     const text = await response.text();
-                    log(`❌ HTTP ${response.status}: ${text.substring(0, 200)}`, 'error');
+                    log(`HTTP ${response.status}: ${text.substring(0, 200)}`, 'error');
                     showToast(`Error ${response.status}`, 'error');
                     return;
                 }
@@ -969,17 +1107,16 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    log(`✅ SUCCESS: ${data.order_id.substring(0, 12)}`, 'success');
-                    showToast(`Bet placed successfully!`, 'success');
+                    log(`Success: ${data.order_id.substring(0, 12)}`, 'success');
+                    showToast('Bet placed successfully', 'success');
                 } else {
-                    log(`❌ FAILED: ${data.error}`, 'error');
+                    log(`Failed: ${data.error}`, 'error');
                     showToast(`Error: ${data.error}`, 'error');
                 }
             } catch (error) {
-                log(`❌ ERROR: ${error.message}`, 'error');
+                log(`Error: ${error.message}`, 'error');
                 showToast(`Error: ${error.message}`, 'error');
             } finally {
-                // Re-enable buttons
                 document.getElementById('buyBtn0').disabled = false;
                 document.getElementById('buyBtn1').disabled = false;
             }
@@ -994,7 +1131,6 @@
             logEntry.className = `log-entry ${type}`;
             const timestamp = new Date().toLocaleTimeString();
             logEntry.textContent = `[${timestamp}] ${message}`;
-
             const logContainer = document.getElementById('activityLog');
             logContainer.appendChild(logEntry);
             logContainer.scrollTop = logContainer.scrollHeight;
@@ -1005,16 +1141,13 @@
             toast.className = `toast ${type}`;
             toast.textContent = message;
             document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+            setTimeout(() => toast.remove(), 3000);
         }
 
         async function loadFromUrl() {
             const url = document.getElementById('urlBox').value.trim();
             if (!url) {
-                showToast('Please enter a Polymarket URL', 'error');
+                showToast('Please enter a URL', 'error');
                 return;
             }
 
@@ -1033,13 +1166,10 @@
                     displayMarkets(data.markets);
                     log(`Loaded ${data.markets.length} market(s)`, 'success');
 
-                    // Auto-select first market
                     if (data.markets.length === 1) {
                         const firstCard = document.querySelector('.market-card');
                         if (firstCard) {
-                            setTimeout(() => {
-                                firstCard.click();
-                            }, 500);
+                            setTimeout(() => firstCard.click(), 500);
                         }
                     }
                 } else {

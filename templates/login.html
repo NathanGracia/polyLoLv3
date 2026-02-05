@@ -2,188 +2,415 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 Login - Polymarket Web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Login - Polymarket Terminal</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⚡</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --color-bg: #0d0d0d;
+            --color-bg-elevated: #181818;
+            --color-bg-card: #1e1e1e;
+            --color-bg-input: #252525;
+            --color-border: #2a2a2a;
+            --color-border-hover: #3a3a3a;
+
+            --color-primary: #00d9ff;
+            --color-primary-dim: #0099bb;
+            --color-secondary: #ff0080;
+            --color-danger: #ff3366;
+
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #a0a0a0;
+            --color-text-tertiary: #707070;
+
+            --glow-primary: rgba(0, 217, 255, 0.3);
+            --glow-danger: rgba(255, 51, 102, 0.3);
+
+            --font-ui: 'Space Grotesk', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
+            font-family: var(--font-ui);
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
             overflow: hidden;
         }
 
-        .login-container {
-            background: #1a1a1a;
-            border: 2px solid #00ffff;
-            border-radius: 12px;
-            padding: 40px;
-            width: 400px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-            animation: glow 2s ease-in-out infinite alternate;
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255, 0, 128, 0.08) 0%, transparent 50%);
+            animation: gradientShift 10s ease-in-out infinite alternate;
+            pointer-events: none;
         }
 
-        @keyframes glow {
-            from { box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-            to { box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); }
+        @keyframes gradientShift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(20px, -20px) scale(1.1); }
+        }
+
+        /* Grid pattern */
+        body::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--color-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 48px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 16px var(--glow-primary);
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
-        .login-header h1 {
+        .login-title {
             font-size: 28px;
-            color: #00ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-            margin-bottom: 10px;
-        }
-
-        .login-header p {
-            color: #888;
-            font-size: 14px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            color: #00ffff;
-            font-size: 14px;
+            font-weight: 600;
             margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: -0.5px;
         }
 
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            background: #0a0a0a;
-            border: 2px solid #00ffff;
-            border-radius: 6px;
-            color: #ffffff;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #ff00ff;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #00ffff, #ff00ff);
-            border: none;
-            border-radius: 6px;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.5);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
         }
 
         .error-message {
-            background: rgba(255, 0, 102, 0.2);
-            border: 1px solid #ff0066;
-            color: #ff0066;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
+            background: rgba(255, 51, 102, 0.1);
+            border: 1px solid var(--color-danger);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            color: var(--color-danger);
+            font-size: 13px;
             display: none;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--color-bg-input);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-family: var(--font-ui);
+            font-size: 15px;
+            transition: all 0.2s var(--ease-smooth);
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--glow-primary);
+        }
+
+        .input::placeholder {
+            color: var(--color-text-tertiary);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dim));
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-family: var(--font-ui);
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-smooth);
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .login-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .login-button:hover {
+            box-shadow: 0 8px 24px var(--glow-primary);
+            transform: translateY(-2px);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
         .footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--color-border);
             text-align: center;
-            margin-top: 20px;
-            color: #666;
+        }
+
+        .footer-text {
             font-size: 12px;
+            color: var(--color-text-tertiary);
+            font-family: var(--font-mono);
+        }
+
+        .footer-accent {
+            color: var(--color-primary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #000;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 32px 24px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+
+            .brand-logo {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .brand-title {
+                font-size: 20px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .login-container {
+                padding: 56px 48px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
+        <div class="brand">
+            <div class="brand-logo">⚡</div>
+            <div class="brand-title">Polymarket</div>
+        </div>
+
         <div class="login-header">
-            <h1>🔐 POLYMARKET WEB</h1>
-            <p>Ultra Fast Trading Interface</p>
+            <h1 class="login-title">Welcome back</h1>
+            <p class="login-subtitle">Sign in to your trading terminal</p>
         </div>
 
         <div id="errorMessage" class="error-message"></div>
 
         <form id="loginForm">
-            <div class="input-group">
-                <label for="username">👤 Username</label>
-                <input type="text" id="username" name="username" required autocomplete="username" autofocus>
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="input"
+                        placeholder="Enter your username"
+                        required
+                        autocomplete="username"
+                        autofocus
+                    >
+                </div>
             </div>
 
-            <div class="input-group">
-                <label for="password">🔑 Password</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password">
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-wrapper">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="input"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
             </div>
 
-            <button type="submit" class="login-btn">🚀 Login</button>
+            <button type="submit" class="login-button" id="loginBtn">
+                <span id="btnText">Sign In</span>
+            </button>
         </form>
 
         <div class="footer">
-            Protected Access • Neon Trading Interface
+            <p class="footer-text">
+                <span class="footer-accent">SECURE</span> · ENCRYPTED · FAST
+            </p>
         </div>
     </div>
 
     <script>
         const form = document.getElementById('loginForm');
         const errorDiv = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('btnText');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            btnText.innerHTML = 'Signing In<span class="loading-spinner"></span>';
 
             try {
                 const response = await fetch('/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    window.location.href = '/';
+                    btnText.textContent = 'Success!';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
                 } else {
-                    showError('❌ Invalid username or password');
+                    showError('Invalid credentials. Please try again.');
+                    loginBtn.disabled = false;
+                    btnText.textContent = 'Sign In';
                 }
             } catch (error) {
-                showError('❌ Login failed: ' + error.message);
+                showError('Connection failed. Please check your network.');
+                loginBtn.disabled = false;
+                btnText.textContent = 'Sign In';
             }
         });
 
@@ -192,8 +419,16 @@
             errorDiv.style.display = 'block';
             setTimeout(() => {
                 errorDiv.style.display = 'none';
-            }, 3000);
+            }, 4000);
         }
+
+        document.getElementById('username').addEventListener('input', () => {
+            errorDiv.style.display = 'none';
+        });
+
+        document.getElementById('password').addEventListener('input', () => {
+            errorDiv.style.display = 'none';
+        });
     </script>
 </body>
 </html>
